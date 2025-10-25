@@ -495,21 +495,37 @@
         }
 
         // Fungsi untuk memuat catatan
-        async function loadNotes() {
-            try {
-                const response = await fetch(API_BASE_URL + '?type=notes');
-                const result = await response.json();
-                
-                if (result.success) {
-                    notes = result.data;
-                    notesContent.innerHTML = notes ? `<p class="mb-0">${notes.replace(/\n/g, '<br>')}</p>` : 'Belum ada catatan. Tambahkan catatan untuk rencana keuangan kamu.';
-                    notesInput.value = notes;
-                }
-            } catch (error) {
-                console.error('Load notes error:', error);
-            }
+       async function loadTransactions() {
+    try {
+        console.log('🔄 Loading transactions...');
+        const response = await fetch(API_BASE_URL + '?type=transactions');
+        
+        if (!response.ok) {
+            throw new Error('HTTP error: ' + response.status);
         }
-
+        
+        const result = await response.json();
+        console.log('📦 Transactions response:', result);
+        
+        if (result.success) {
+            transactions = result.data || [];
+            // Pastikan setiap transaksi memiliki ID
+            transactions.forEach((transaction, index) => {
+                if (!transaction.id) {
+                    transaction.id = 'no-id-' + index;
+                }
+            });
+            console.log('✅ Loaded', transactions.length, 'transactions');
+        } else {
+            throw new Error(result.message);
+        }
+    } catch (error) {
+        console.error('❌ Load transactions error:', error);
+        // Gunakan data kosong sebagai fallback
+        transactions = [];
+        throw error;
+    }
+}
         // Fungsi untuk menambah transaksi
         async function addTransaction(e) {
             e.preventDefault();
@@ -614,30 +630,29 @@
 
         // Fungsi untuk menghapus transaksi
                 async function deleteTransaction(id) {
-            if (!confirm('Hapus transaksi ini?')) return;
-            
-            try {
-                // FIX: Ganti 'transaction' jadi 'transactions'
-                const response = await fetch(API_BASE_URL + '?type=transactions&id=' + id, {
-                    method: 'DELETE'
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    transactions = transactions.filter(t => t.id !== id);
-                    renderTransactions();
-                    updateBalance();
-                    updateChart();
-                    showNotification('Transaksi dihapus! 🗑️', 'success');
-                } else {
-                    throw new Error(result.message);
-                }
-            } catch (error) {
-                console.error('Delete error:', error);
-                showNotification('Gagal menghapus transaksi', 'error');
-            }
+    if (!confirm('Hapus transaksi ini?')) return;
+    
+    try {
+        const response = await fetch(API_BASE_URL + '?type=transactions&id=' + id, {
+            method: 'DELETE'
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            transactions = transactions.filter(t => t.id !== id);
+            renderTransactions();
+            updateBalance();
+            updateChart();
+            showNotification('Transaksi dihapus! 🗑️', 'success');
+        } else {
+            throw new Error(result.message);
         }
+    } catch (error) {
+        console.error('Delete error:', error);
+        showNotification('Gagal menghapus transaksi: ' + error.message, 'error');
+    }
+}
         // Fungsi untuk merender daftar transaksi
         function renderTransactions(filteredTransactions = null) {
             const transactionsToRender = filteredTransactions || transactions;
@@ -909,4 +924,5 @@
     </script>
 </body>
 </html>
+
 
