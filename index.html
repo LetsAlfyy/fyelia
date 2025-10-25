@@ -537,8 +537,7 @@
             }
         }
 
-        // Temporary fallback di index.html
-// Fungsi untuk menambah transaksi - FIXED VERSION
+        // Fungsi untuk menambah transaksi - FIXED
 async function addTransaction(e) {
     e.preventDefault();
     
@@ -560,8 +559,15 @@ async function addTransaction(e) {
         return;
     }
     
+    // Format tanggal untuk display
+    const tanggalDisplay = new Date(tanggal).toLocaleDateString('id-ID', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+    });
+    
     const transactionData = {
-        tanggal: formatDateForDisplay(tanggal),
+        tanggal: tanggalDisplay,
         tanggalAsli: tanggal,
         nama: nama,
         jenis: jenis,
@@ -570,40 +576,29 @@ async function addTransaction(e) {
     };
     
     try {
-        console.log('🚀 Saving transaction...');
-        console.log('📤 Transaction data:', transactionData);
-        
-        // Buat URLSearchParams untuk form data
-        const formData = new URLSearchParams();
-        formData.append('tanggal', transactionData.tanggal);
-        formData.append('tanggalAsli', transactionData.tanggalAsli);
-        formData.append('nama', transactionData.nama);
-        formData.append('jenis', transactionData.jenis);
-        formData.append('nominal', transactionData.nominal.toString());
-        formData.append('keterangan', transactionData.keterangan);
-        
-        console.log('🔗 Form data:', formData.toString());
+        console.log('🚀 Saving transaction to Vercel API...');
+        console.log('📤 Data:', transactionData);
         
         const response = await fetch(API_BASE_URL + '?type=transactions', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
+                'Content-Type': 'application/json',
             },
-            body: formData.toString()
+            body: JSON.stringify(transactionData)
         });
         
-        console.log('📄 Response status:', response.status);
+        console.log('📄 Vercel Response status:', response.status);
         
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            throw new Error(`Vercel API error: ${response.status}`);
         }
         
         const result = await response.json();
-        console.log('💾 Save response:', result);
+        console.log('💾 Vercel Response:', result);
         
         if (result.success) {
-            // Tambahkan ke array lokal
-            transactions.unshift(result.data);
+            // Refresh data dari server untuk memastikan data tersimpan
+            await loadTransactions();
             
             // Update UI
             renderTransactions();
@@ -616,6 +611,13 @@ async function addTransaction(e) {
             tanggalInput.value = new Date().toISOString().split('T')[0];
             
             showNotification(`Transaksi berhasil disimpan! ✅ ${formatCurrency(nominal)}`, 'success');
+            
+            // Test: Cek data setelah simpan
+            console.log('🔄 Checking data after save...');
+            const checkResponse = await fetch(API_BASE_URL + '?type=transactions');
+            const checkData = await checkResponse.json();
+            console.log('📊 Data after save:', checkData);
+            
         } else {
             throw new Error(result.message || 'Gagal menyimpan transaksi');
         }
@@ -624,7 +626,6 @@ async function addTransaction(e) {
         showNotification('Gagal menyimpan transaksi: ' + error.message, 'error');
     }
 }
-
         // Fungsi untuk menyimpan catatan
         async function saveNotes() {
             const newNotes = notesInput.value.trim();
@@ -955,6 +956,7 @@ async function addTransaction(e) {
     </script>
 </body>
 </html>
+
 
 
 
