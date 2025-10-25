@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fyeliaa - Sistem Informasi Keuangan</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .toast-container {
+            z-index: 1055;
+        }
+        .fade-in {
+            animation: fadeIn 0.3s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .navbar-toggler {
+            border: none;
+        }
+        .navbar-toggler:focus {
+            box-shadow: none;
+        }
+        .card {
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            border: 1px solid rgba(0, 0, 0, 0.125);
+        }
+        .card:hover {
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+            transition: box-shadow 0.3s ease-in-out;
+        }
+        .section-title {
+            position: relative;
+            padding-bottom: 10px;
+        }
+        .section-title:after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 60px;
+            height: 3px;
+            background-color: #198754;
+        }
+        .stat-card {
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .transaction-item {
+            border-left: 4px solid;
+            transition: all 0.2s ease;
+        }
+        .transaction-item:hover {
+            transform: translateX(5px);
+        }
+        .transaction-income {
+            border-left-color: #198754;
+        }
+        .transaction-expense {
+            border-left-color: #dc3545;
+        }
+        .btn-action {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.875rem;
+        }
+        .loading-spinner {
+            display: inline-block;
+            width: 1rem;
+            height: 1rem;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #198754;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        @media (max-width: 768px) {
+            .container {
+                padding-left: 15px;
+                padding-right: 15px;
+            }
+            .card-body {
+                padding: 1rem;
+            }
+            .navbar-collapse {
+                background-color: #198754;
+                padding: 1rem;
+                border-radius: 0.375rem;
+                margin-top: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <!-- Toast Notifikasi Container -->
+    <div class="toast-container position-fixed top-0 end-0 p-3"></div>
+
+    <!-- Header -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-success sticky-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold d-flex align-items-center" href="#">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-piggy-bank me-2" viewBox="0 0 16 16">
+                    <path d="M5 6.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0zm1.138-1.496A6.613 6.613 0 0 1 7.964 4.5c.666 0 1.303.097 1.893.273a.5.5 0 0 0 .286-.958A7.602 7.602 0 0 0 7.964 3.5c-.734 0-1.441.103-2.102.292a.5.5 0 1 0 .276.962z"/>
+                    <path fill-rule="evenodd" d="M7.964 1.527c-2.977 0-5.571 1.704-6.32 4.125h-.55A1 1 0 0 0 .11 6.824l.254 1.46A1.5 1.5 0 0 0 1.85 9.232h1.994a4.823 4.823 0 0 1-.05-.475 5.484 5.484 0 0 1 .043-2.028l.01-.041a5.18 5.18 0 0 1 .202-.793c.169-.516.436-1.048.849-1.516C4.811 2.206 6.301 1.527 7.964 1.527zm5.703 3.063A6.059 6.059 0 0 0 7.965 2.527c-1.458 0-2.732.56-3.664 1.427A4.076 4.076 0 0 0 3.436 5.57c-.097.302-.171.62-.219.947a6.462 6.462 0 0 0-.033 2.023 7.48 7.48 0 0 0 .625 2.213l.1.214-.105.307a1 1 0 0 0 .021.91l.12.226c.083.16.19.299.317.41.202.172.464.255.732.255h2.5a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1.306l.13-.333a1 1 0 0 0 .01-.855l-.081-.203A5.446 5.446 0 0 1 5.45 8.73a5.507 5.507 0 0 1-.667-2.62c0-.97.232-1.89.646-2.705.207-.41.476-.78.81-1.1C6.756 3.304 7.334 3.027 7.964 3.027c.63 0 1.208.277 1.665.698.334.32.603.69.81 1.1.414.815.646 1.735.646 2.705 0 .898-.214 1.747-.595 2.507a5.478 5.478 0 0 1-1.362 1.804l-.2.162.09.217c.094.227.165.468.21.719h.857a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5H9.743a4.972 4.972 0 0 1-.22-.757 6.472 6.472 0 0 0 1.486-1.73 6.52 6.52 0 0 0 1.008-3.51 6.509 6.509 0 0 0-.315-2.095z"/>
+                    <path d="M8 12.5a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h2z"/>
+                </svg>
+                Fyeliaa
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#dashboard">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#input-transaksi">Input Transaksi</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#riwayat">Riwayat</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#catatan">Catatan</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container py-4">
+        <!-- Dashboard -->
+        <section id="dashboard" class="mb-5">
+            <h2 class="section-title text-success mb-4">Dashboard</h2>
+            
+            <div class="row">
+                <!-- Total Saldo -->
+                <div class="col-md-6 mb-4">
+                    <div class="card stat-card bg-primary text-white">
+                        <div class="card-body text-center py-4">
+                            <h5 class="card-title">Total Saldo Saat Ini</h5>
+                            <h2 class="card-text fw-bold mb-2" id="total-saldo">Rp 0</h2>
+                            <p class="card-text mb-0">Tabungan bersama Alfye & Aulia</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Statistik Cepat -->
+                <div class="col-md-6 mb-4">
+                    <div class="card stat-card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title text-success mb-3">Statistik</h5>
+                            <div class="row text-center">
+                                <div class="col-6">
+                                    <div class="p-3">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="#198754" class="bi bi-arrow-down-circle mb-2" viewBox="0 0 16 16">
+                                            <path fill-rule="evenodd" d="M1 8a7 7 0 1 0 14 0A7 7 0 0 0 1 8zm15 0A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8.5 4.5a.5.5 0 0 0-1 0v5.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V4.5z"/>
+                                        </svg>
+                                        <h6 class="text-success">Pemasukan</h6>
+                                        <h4 id="total-pemasukan" class="text-success">Rp 0</h4>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="p-3">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="#dc3545" class="bi bi-arrow-up-circle mb-2" viewBox="0 0 16 16">
+                                            <path fill-rule="evenodd" d="M1 8a7 7 0 1 0 14 0A7 7 0 0 0 1 8zm15 0A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-7.5 3.5a.5.5 0 0 1-1 0V5.707L5.354 7.854a.5.5 0 1 1-.708-.708l3-3a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 5.707V11.5z"/>
+                                        </svg>
+                                        <h6 class="text-danger">Pengeluaran</h6>
+                                        <h4 id="total-pengeluaran" class="text-danger">Rp 0</h4>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grafik -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title text-success mb-3">Grafik Perkembangan Tabungan</h5>
+                            <div class="chart-container">
+                                <canvas id="savings-chart" height="100"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Input Transaksi -->
+        <section id="input-transaksi" class="mb-5">
+            <h2 class="section-title text-success mb-4">Input Transaksi</h2>
+            
+            <div class="card">
+                <div class="card-body">
+                    <form id="transaction-form">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="nama" class="form-label">Nama Penyimpan/Pengambil</label>
+                                <select id="nama" class="form-select" required>
+                                    <option value="">Pilih nama</option>
+                                    <option value="Alfye">Alfye</option>
+                                    <option value="Aulia">Aulia</option>
+                                </select>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="jenis" class="form-label">Jenis Transaksi</label>
+                                <select id="jenis" class="form-select" required>
+                                    <option value="">Pilih jenis</option>
+                                    <option value="masuk">Uang Masuk</option>
+                                    <option value="keluar">Uang Keluar</option>
+                                </select>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="nominal" class="form-label">Nominal (Rp)</label>
+                                <input type="number" id="nominal" class="form-control" min="0" required>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="tanggal" class="form-label">Tanggal Transaksi</label>
+                                <input type="date" id="tanggal" class="form-control" required>
+                            </div>
+                            
+                            <div class="col-12 mb-3">
+                                <label for="keterangan" class="form-label">Keterangan</label>
+                                <input type="text" id="keterangan" class="form-control" placeholder="Contoh: Gaji bulanan, Bayar listrik, dll.">
+                            </div>
+                            
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-success px-4">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check-circle me-2" viewBox="0 0 16 16">
+                                        <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                                        <path d="M10.97 4.97a.235.235 0 0 0-.02.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-1.071-1.05z"/>
+                                    </svg>
+                                    Simpan Transaksi
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <!-- Riwayat Transaksi -->
+        <section id="riwayat" class="mb-5">
+            <h2 class="section-title text-success mb-4">Riwayat Transaksi</h2>
+            
+            <div class="card">
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-3 mb-2">
+                            <label for="filter-nama" class="form-label">Filter Nama</label>
+                            <select id="filter-nama" class="form-select">
+                                <option value="">Semua</option>
+                                <option value="Alfye">Alfye</option>
+                                <option value="Aulia">Aulia</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-3 mb-2">
+                            <label for="filter-jenis" class="form-label">Filter Jenis</label>
+                            <select id="filter-jenis" class="form-select">
+                                <option value="">Semua</option>
+                                <option value="masuk">Uang Masuk</option>
+                                <option value="keluar">Uang Keluar</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-3 mb-2">
+                            <label for="filter-bulan" class="form-label">Filter Bulan</label>
+                            <select id="filter-bulan" class="form-select">
+                                <option value="">Semua Bulan</option>
+                                <option value="1">Januari</option>
+                                <option value="2">Februari</option>
+                                <option value="3">Maret</option>
+                                <option value="4">April</option>
+                                <option value="5">Mei</option>
+                                <option value="6">Juni</option>
+                                <option value="7">Juli</option>
+                                <option value="8">Agustus</option>
+                                <option value="9">September</option>
+                                <option value="10">Oktober</option>
+                                <option value="11">November</option>
+                                <option value="12">Desember</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-3 mb-2">
+                            <label for="filter-tahun" class="form-label">Filter Tahun</label>
+                            <select id="filter-tahun" class="form-select">
+                                <!-- Tahun akan diisi secara dinamis -->
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-12 d-flex justify-content-end">
+                            <button id="reset-filter" class="btn btn-outline-secondary">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-clockwise me-1" viewBox="0 0 16 16">
+                                    <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+                                    <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+                                </svg>
+                                Reset Filter
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-success">
+                                <tr>
+                                    <th>Tanggal</th>
+                                    <th>Nama</th>
+                                    <th>Jenis</th>
+                                    <th>Nominal</th>
+                                    <th>Keterangan</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="transaction-list">
+                                <!-- Data transaksi akan dimuat di sini -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Catatan Bersama -->
+        <section id="catatan" class="mb-5">
+            <h2 class="section-title text-success mb-4">Catatan Bersama</h2>
+            
+            <div class="card">
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <strong>📝 Catatan Bersama:</strong> Catatan ini dapat dilihat dan diedit oleh semua pengguna Fyeliaa (Alfye & Aulia).
+                    </div>
+                    
+                    <div class="mb-3 p-3 bg-light rounded">
+                        <div id="notes-content">
+                            <div class="text-center py-3">
+                                <div class="loading-spinner"></div>
+                                <p class="mt-2 mb-0">Memuat catatan...</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="notes-input" class="form-label">Tambah/Edit Catatan</label>
+                        <textarea id="notes-input" class="form-control" rows="4" placeholder="Tulis catatan atau rencana keuangan di sini..."></textarea>
+                    </div>
+                    
+                    <button id="save-notes" class="btn btn-success">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-save me-1" viewBox="0 0 16 16">
+                            <path d="M2 1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H9.5a1 1 0 0 0-1 1v7.293l2.646-2.647a.5.5 0 0 1 .708.708l-3.5 3.5a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L7.5 9.293V2a2 2 0 0 1 2-2H14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h2.5a.5.5 0 0 1 0 1H2z"/>
+                        </svg>
+                        Simpan Catatan
+                    </button>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-3 mt-5">
+        <div class="container text-center">
+            <p class="mb-0">&copy; 2025 Fyeliaa - Sistem Informasi Keuangan Alfye & Aulia</p>
+            <p class="mb-0 small mt-1">💾 Data tersimpan secara terpusat dan dapat diakses oleh semua pengguna</p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // Konfigurasi API
+        const API_BASE_URL = window.location.origin + '/api/data';
+
+        console.log('🚀 Fyeliaa Starting...');
+        console.log('🔗 API URL:', API_BASE_URL);
+
+        // Data aplikasi
+        let transactions = [];
+        let notes = '';
+        let savingsChart = null;
+
+        // Elemen DOM
+        const transactionForm = document.getElementById('transaction-form');
+        const transactionList = document.getElementById('transaction-list');
+        const totalSaldoElement = document.getElementById('total-saldo');
+        const totalPemasukanElement = document.getElementById('total-pemasukan');
+        const totalPengeluaranElement = document.getElementById('total-pengeluaran');
+        const filterNama = document.getElementById('filter-nama');
+        const filterJenis = document.getElementById('filter-jenis');
+        const filterBulan = document.getElementById('filter-bulan');
+        const filterTahun = document.getElementById('filter-tahun');
+        const resetFilterButton = document.getElementById('reset-filter');
+        const notesContent = document.getElementById('notes-content');
+        const notesInput = document.getElementById('notes-input');
+        const saveNotesButton = document.getElementById('save-notes');
+        const tanggalInput = document.getElementById('tanggal');
+
+        // Inisialisasi
+        document.addEventListener('DOMContentLoaded', async function() {
+            console.log('📱 DOM Loaded');
+            
+            // Set tanggal default ke hari ini
+            tanggalInput.value = new Date().toISOString().split('T')[0];
+            
+            // Load data
+            await loadAllData();
+            
+            // Event listeners
+            transactionForm.addEventListener('submit', addTransaction);
+            saveNotesButton.addEventListener('click', saveNotes);
+            filterNama.addEventListener('change', filterTransactions);
+            filterJenis.addEventListener('change', filterTransactions);
+            filterBulan.addEventListener('change', filterTransactions);
+            filterTahun.addEventListener('change', filterTransactions);
+            resetFilterButton.addEventListener('click', resetFilters);
+
+            // Smooth scroll untuk navigasi
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const targetId = this.getAttribute('href');
+                    const targetElement = document.querySelector(targetId);
+                    if (targetElement) {
+                        targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                });
+            });
+
+            showNotification('Fyeliaa siap digunakan! 🎉', 'success');
+        });
+
+        // Fungsi untuk memuat semua data
+        async function loadAllData() {
+            try {
+                showNotification('Memuat data...', 'info');
+                
+                // Load transaksi
+                await loadTransactions();
+                
+                // Load catatan
+                await loadNotes();
+                
+                // Update UI
+                renderTransactions();
+                updateBalance();
+                initChart();
+                populateYearFilters();
+                
+                console.log('✅ Data loaded:', transactions.length, 'transactions');
+                showNotification('Data berhasil dimuat! ✅', 'success');
+                
+            } catch (error) {
+                console.error('❌ Error loading data:', error);
+                showNotification('Gagal memuat data', 'error');
+            }
+        }
+
+        // Fungsi untuk memuat transaksi
+        async function loadTransactions() {
+            try {
+                console.log('🔄 Loading transactions...');
+                const response = await fetch(API_BASE_URL + '?type=transactions');
+                
+                if (!response.ok) {
+                    throw new Error('HTTP error: ' + response.status);
+                }
+                
+                const result = await response.json();
+                console.log('📦 Transactions response:', result);
+                
+                if (result.success) {
+                    transactions = result.data || [];
+                    console.log('✅ Loaded', transactions.length, 'transactions');
+                } else {
+                    throw new Error(result.message);
+                }
+            } catch (error) {
+                console.error('❌ Load transactions error:', error);
+                throw error;
+            }
+        }
+
+        // Fungsi untuk memuat catatan
+        async function loadNotes() {
+            try {
+                const response = await fetch(API_BASE_URL + '?type=notes');
+                const result = await response.json();
+                
+                if (result.success) {
+                    notes = result.data;
+                    notesContent.innerHTML = notes ? `<p class="mb-0">${notes.replace(/\n/g, '<br>')}</p>` : 'Belum ada catatan. Tambahkan catatan untuk rencana keuangan kamu.';
+                    notesInput.value = notes;
+                }
+            } catch (error) {
+                console.error('Load notes error:', error);
+            }
+        }
+
+        // Fungsi untuk menambah transaksi
+        async function addTransaction(e) {
+            e.preventDefault();
+            
+            const nama = document.getElementById('nama').value;
+            const jenis = document.getElementById('jenis').value;
+            const nominal = parseInt(document.getElementById('nominal').value);
+            const keterangan = document.getElementById('keterangan').value;
+            const tanggal = document.getElementById('tanggal').value;
+            
+            console.log('📝 Form data:', { nama, jenis, nominal, keterangan, tanggal });
+            
+            if (!nama || !jenis || !nominal || !tanggal) {
+                showNotification('Harap isi semua field!', 'warning');
+                return;
+            }
+            
+            if (nominal <= 0) {
+                showNotification('Nominal harus lebih dari 0!', 'warning');
+                return;
+            }
+            
+            const transaction = {
+                tanggal: formatDateForDisplay(tanggal),
+                tanggalAsli: tanggal,
+                nama,
+                jenis,
+                nominal,
+                keterangan: keterangan || ''
+            };
+            
+            try {
+                console.log('🚀 Saving transaction...');
+                // FIX: Ganti 'transaction' jadi 'transactions'
+                const response = await fetch(API_BASE_URL + '?type=transactions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(transaction)
+                });
+                
+                const result = await response.json();
+                console.log('💾 Save response:', result);
+                
+                if (result.success) {
+                    // Tambahkan ke array lokal
+                    transactions.unshift(result.data);
+                    
+                    // Update UI
+                    renderTransactions();
+                    updateBalance();
+                    updateChart();
+                    populateYearFilters();
+                    
+                    // Reset form
+                    transactionForm.reset();
+                    tanggalInput.value = new Date().toISOString().split('T')[0];
+                    
+                    showNotification(`Transaksi berhasil disimpan! ✅ ${formatCurrency(nominal)}`, 'success');
+                } else {
+                    throw new Error(result.message);
+                }
+            } catch (error) {
+                console.error('❌ Save error:', error);
+                showNotification('Gagal menyimpan transaksi: ' + error.message, 'error');
+            }
+        }
+
+        // Fungsi untuk menyimpan catatan
+        async function saveNotes() {
+            const newNotes = notesInput.value.trim();
+            
+            if (!newNotes) {
+                showNotification('Catatan tidak boleh kosong!', 'warning');
+                return;
+            }
+            
+            try {
+                const response = await fetch(API_BASE_URL + '?type=notes', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ notes: newNotes })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    notes = newNotes;
+                    notesContent.innerHTML = `<p class="mb-0">${notes.replace(/\n/g, '<br>')}</p>`;
+                    showNotification('Catatan berhasil disimpan! 📝', 'success');
+                } else {
+                    throw new Error(result.message);
+                }
+            } catch (error) {
+                console.error('Save notes error:', error);
+                showNotification('Gagal menyimpan catatan', 'error');
+            }
+        }
+
+        // Fungsi untuk menghapus transaksi
+                async function deleteTransaction(id) {
+            if (!confirm('Hapus transaksi ini?')) return;
+            
+            try {
+                // FIX: Ganti 'transaction' jadi 'transactions'
+                const response = await fetch(API_BASE_URL + '?type=transactions&id=' + id, {
+                    method: 'DELETE'
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    transactions = transactions.filter(t => t.id !== id);
+                    renderTransactions();
+                    updateBalance();
+                    updateChart();
+                    showNotification('Transaksi dihapus! 🗑️', 'success');
+                } else {
+                    throw new Error(result.message);
+                }
+            } catch (error) {
+                console.error('Delete error:', error);
+                showNotification('Gagal menghapus transaksi', 'error');
+            }
+        }
+        // Fungsi untuk merender daftar transaksi
+        function renderTransactions(filteredTransactions = null) {
+            const transactionsToRender = filteredTransactions || transactions;
+            const tbody = document.getElementById('transaction-list');
+            
+            if (transactionsToRender.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4">Tidak ada transaksi</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = transactionsToRender.map(transaction => {
+                const nominalClass = transaction.jenis === 'masuk' ? 'text-success' : 'text-danger';
+                const nominalPrefix = transaction.jenis === 'masuk' ? '+' : '-';
+                const jenisText = transaction.jenis === 'masuk' ? 'Uang Masuk' : 'Uang Keluar';
+                
+                return `
+                    <tr class="transaction-item ${transaction.jenis === 'masuk' ? 'transaction-income' : 'transaction-expense'}">
+                        <td>${transaction.tanggal}</td>
+                        <td>${transaction.nama}</td>
+                        <td>${jenisText}</td>
+                        <td class="${nominalClass} fw-bold">${nominalPrefix} ${formatCurrency(transaction.nominal)}</td>
+                        <td>${transaction.keterangan || '-'}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-danger btn-action" onclick="deleteTransaction('${transaction.id}')">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                                    <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+                                    <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+                                </svg>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Fungsi untuk memperbarui saldo
+        function updateBalance() {
+            let totalSaldo = 0;
+            let totalPemasukan = 0;
+            let totalPengeluaran = 0;
+            
+            transactions.forEach(transaction => {
+                if (transaction.jenis === 'masuk') {
+                    totalSaldo += transaction.nominal;
+                    totalPemasukan += transaction.nominal;
+                } else {
+                    totalSaldo -= transaction.nominal;
+                    totalPengeluaran += transaction.nominal;
+                }
+            });
+            
+            totalSaldoElement.textContent = formatCurrency(totalSaldo);
+            totalPemasukanElement.textContent = formatCurrency(totalPemasukan);
+            totalPengeluaranElement.textContent = formatCurrency(totalPengeluaran);
+            
+            console.log('💰 Balance updated:', { totalSaldo, totalPemasukan, totalPengeluaran });
+        }
+
+        // Fungsi untuk memfilter transaksi
+        function filterTransactions() {
+            const namaFilter = filterNama.value;
+            const jenisFilter = filterJenis.value;
+            const bulanFilter = filterBulan.value;
+            const tahunFilter = filterTahun.value;
+            
+            let filteredTransactions = transactions;
+            
+            if (namaFilter) {
+                filteredTransactions = filteredTransactions.filter(transaction => transaction.nama === namaFilter);
+            }
+            
+            if (jenisFilter) {
+                filteredTransactions = filteredTransactions.filter(transaction => transaction.jenis === jenisFilter);
+            }
+            
+            if (bulanFilter) {
+                filteredTransactions = filteredTransactions.filter(transaction => {
+                    const transactionMonth = new Date(transaction.tanggalAsli).getMonth() + 1;
+                    return transactionMonth.toString() === bulanFilter;
+                });
+            }
+            
+            if (tahunFilter) {
+                filteredTransactions = filteredTransactions.filter(transaction => {
+                    const transactionYear = new Date(transaction.tanggalAsli).getFullYear();
+                    return transactionYear.toString() === tahunFilter;
+                });
+            }
+            
+            renderTransactions(filteredTransactions);
+        }
+
+        // Fungsi untuk mereset filter
+        function resetFilters() {
+            filterNama.value = '';
+            filterJenis.value = '';
+            filterBulan.value = '';
+            filterTahun.value = '';
+            renderTransactions();
+            showNotification('Filter direset!', 'info');
+        }
+
+        // Fungsi untuk mengisi filter tahun
+        function populateYearFilters() {
+            const years = new Set();
+            transactions.forEach(transaction => {
+                const year = new Date(transaction.tanggalAsli).getFullYear();
+                years.add(year);
+            });
+            
+            const currentYear = new Date().getFullYear();
+            years.add(currentYear);
+            
+            const sortedYears = Array.from(years).sort((a, b) => b - a);
+            
+            const filterTahunElement = document.getElementById('filter-tahun');
+            if (filterTahunElement) {
+                filterTahunElement.innerHTML = '<option value="">Semua Tahun</option>';
+                sortedYears.forEach(year => {
+                    filterTahunElement.innerHTML += `<option value="${year}">${year}</option>`;
+                });
+            }
+        }
+
+        // Fungsi untuk inisialisasi grafik
+        function initChart() {
+            const ctx = document.getElementById('savings-chart').getContext('2d');
+            const labels = [];
+            const data = [];
+            
+            let currentBalance = 0;
+            const sortedTransactions = [...transactions].sort((a, b) => 
+                new Date(a.tanggalAsli) - new Date(b.tanggalAsli)
+            );
+            
+            sortedTransactions.forEach(transaction => {
+                if (transaction.jenis === 'masuk') {
+                    currentBalance += transaction.nominal;
+                } else {
+                    currentBalance -= transaction.nominal;
+                }
+                labels.push(transaction.tanggal);
+                data.push(currentBalance);
+            });
+            
+            if (labels.length === 0) {
+                labels.push('Mulai');
+                data.push(0);
+            }
+            
+            savingsChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Saldo Tabungan',
+                        data: data,
+                        borderColor: '#198754',
+                        backgroundColor: 'rgba(25, 135, 84, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return 'Rp ' + value.toLocaleString('id-ID');
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Fungsi untuk memperbarui grafik
+        function updateChart() {
+            if (!savingsChart) return;
+            
+            const labels = [];
+            const data = [];
+            
+            let currentBalance = 0;
+            const sortedTransactions = [...transactions].sort((a, b) => 
+                new Date(a.tanggalAsli) - new Date(b.tanggalAsli)
+            );
+            
+            sortedTransactions.forEach(transaction => {
+                if (transaction.jenis === 'masuk') {
+                    currentBalance += transaction.nominal;
+                } else {
+                    currentBalance -= transaction.nominal;
+                }
+                labels.push(transaction.tanggal);
+                data.push(currentBalance);
+            });
+            
+            if (labels.length === 0) {
+                labels.push('Mulai');
+                data.push(0);
+            }
+            
+            savingsChart.data.labels = labels;
+            savingsChart.data.datasets[0].data = data;
+            savingsChart.update();
+        }
+
+        // Fungsi untuk memformat mata uang
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('id-ID', {
+                style: 'currency',
+                currency: 'IDR',
+                minimumFractionDigits: 0
+            }).format(amount);
+        }
+
+        // Fungsi untuk memformat tanggal
+        function formatDateForDisplay(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('id-ID', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            });
+        }
+
+        // Fungsi untuk menampilkan notifikasi
+        function showNotification(message, type = 'info') {
+            const toastContainer = document.querySelector('.toast-container');
+            
+            const toast = document.createElement('div');
+            toast.className = `toast align-items-center text-white bg-${type === 'error' ? 'danger' : type} border-0 fade-in`;
+            toast.setAttribute('role', 'alert');
+            toast.setAttribute('aria-live', 'assertive');
+            toast.setAttribute('aria-atomic', 'true');
+            
+            toast.innerHTML = `
+                <div class="d-flex">
+                    <div class="toast-body">
+                        ${message}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            `;
+            
+            toastContainer.appendChild(toast);
+            
+            const bsToast = new bootstrap.Toast(toast, {
+                autohide: true,
+                delay: 4000
+            });
+            
+            bsToast.show();
+            
+            toast.addEventListener('hidden.bs.toast', () => {
+                toast.remove();
+            });
+        }
+    </script>
+</body>
+</html>
