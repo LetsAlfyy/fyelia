@@ -538,7 +538,7 @@
         }
 
         // Fungsi untuk menambah transaksi
-        // Fungsi untuk menambah transaksi - PERBAIKAN
+        // Fungsi untuk menambah transaksi - FIXED
 async function addTransaction(e) {
     e.preventDefault();
     
@@ -572,19 +572,12 @@ async function addTransaction(e) {
     try {
         console.log('🚀 Saving transaction...');
         
-        // Buat URL dengan parameter
-        const params = new URLSearchParams();
-        params.append('type', 'transactions');
-        params.append('method', 'POST');
-        for (const key in transactionData) {
-            params.append(key, transactionData[key]);
-        }
-        
-        const url = API_BASE_URL + '?' + params.toString();
-        console.log('🔗 Saving to:', url);
-        
-        const response = await fetch(url, {
-            method: 'POST'
+        const response = await fetch(API_BASE_URL + '?type=transactions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(transactionData)
         });
         
         const result = await response.json();
@@ -612,7 +605,7 @@ async function addTransaction(e) {
             
             showNotification(`Transaksi berhasil disimpan! ✅ ${formatCurrency(nominal)}`, 'success');
         } else {
-            throw new Error(result.message);
+            throw new Error(result.message || 'Gagal menyimpan transaksi');
         }
     } catch (error) {
         console.error('❌ Save error:', error);
@@ -950,5 +943,6 @@ async function addTransaction(e) {
     </script>
 </body>
 </html>
+
 
 
