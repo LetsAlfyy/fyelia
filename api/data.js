@@ -1,7 +1,8 @@
-// api/data.js - WORKAROUND: Use GET with encoded data
-const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx8gFsR10kWY6tEuD40YaQ_Ja0qSnV8pH7Vw2RhbBKsyve5DFmQP3QZVt-YMZP7LrcT/exec';
+// api/data.js - FIXED VERSION
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzzbkvEBnYpoM_yFtNgFcTlLaFiRk7UAsI2Qsy3DLZMEfPx2pr_Q0qVjM4jvwvihKRDkw/exec';
 
 export default async function handler(req, res) {
+  // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -13,66 +14,71 @@ export default async function handler(req, res) {
   const { type, id } = req.query;
 
   try {
-    console.log('📱 Request:', { method: req.method, type, id });
-
-    let url = `${GOOGLE_SCRIPT_URL}?type=${type}`;
-    let fetchMethod = 'GET';
-
-    // DELETE: send as GET with method parameter
-    if (req.method === 'DELETE') {
-      url += `&method=DELETE&id=${encodeURIComponent(id)}`;
-    }
-    // POST: encode data in URL as workaround
-    else if (req.method === 'POST' && req.body) {
-      url += `&method=POST`;
-      // Encode each field as URL parameter
-      const body = req.body;
-      if (body.tanggal) url += `&tanggal=${encodeURIComponent(body.tanggal)}`;
-      if (body.tanggalAsli) url += `&tanggalAsli=${encodeURIComponent(body.tanggalAsli)}`;
-      if (body.nama) url += `&nama=${encodeURIComponent(body.nama)}`;
-      if (body.jenis) url += `&jenis=${encodeURIComponent(body.jenis)}`;
-      if (body.nominal) url += `&nominal=${encodeURIComponent(body.nominal)}`;
-      if (body.keterangan) url += `&keterangan=${encodeURIComponent(body.keterangan)}`;
-      if (body.notes) url += `&notes=${encodeURIComponent(body.notes)}`;
-      
-      console.log('📤 POST data encoded in URL');
-    }
-    // GET with id
-    else if (id) {
-      url += `&id=${encodeURIComponent(id)}`;
-    }
-
-    console.log('🔗 URL:', url.substring(0, 150) + '...');
-
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 20000);
-
-    const response = await fetch(url, {
-      method: fetchMethod,
-      headers: { 'Content-Type': 'text/plain' },
-      redirect: 'follow',
-      signal: controller.signal
+    console.log('📱 API Request:', { 
+      method: req.method, 
+      type, 
+      id,
+      body: req.body 
     });
 
+    // Build URL untuk Google Apps Script
+    let url = GOOGLE_SCRIPT_URL;
+    const params = new URLSearchParams();
+    params.append('type', type);
+    
+    if (req.method === 'DELETE') {
+      params.append('method', 'DELETE');
+    }
+    
+    if (id) {
+      params.append('id', id);
+    }
+
+    url += '?' + params.toString();
+    console.log('🔗 Calling Google Sheets:', url);
+
+    const options = {
+      method: 'POST', // Selalu gunakan POST untuk Google Apps Script
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      redirect: 'follow'
+    };
+
+    // Untuk POST requests, kirim data sebagai form data
+    if (req.method === 'POST' && req.body) {
+      const formData = new URLSearchParams();
+      for (const key in req.body) {
+        formData.append(key, req.body[key]);
+      }
+      options.body = formData.toString();
+      console.log('📤 Sending form data:', options.body);
+    }
+
+    // Timeout setelah 15 detik
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
+    options.signal = controller.signal;
+
+    const response = await fetch(url, options);
     clearTimeout(timeoutId);
 
-    const text = await response.text();
-    console.log('📥 Response length:', text.length);
-    console.log('📥 First 200 chars:', text.substring(0, 200));
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
 
+    const text = await response.text();
+    console.log('📄 Response text:', text);
+    
     let result;
     try {
       result = JSON.parse(text);
-      console.log('✅ JSON parsed successfully');
-    } catch (parseError) {
-      console.error('❌ JSON parse error:', parseError.message);
-      console.error('Response text:', text);
-      throw new Error('Invalid JSON: ' + text.substring(0, 100));
+    } catch (e) {
+      throw new Error('Invalid JSON response from Google Sheets: ' + text);
     }
 
-    console.log('✅ Result:', { 
+    console.log('✅ Google Sheets response:', { 
       success: result.success,
-      message: result.message,
       dataLength: result.data ? (Array.isArray(result.data) ? result.data.length : 'string') : 0
     });
 
@@ -80,27 +86,38 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error('❌ API Error:', {
+      message: error.message,
       name: error.name,
-      message: error.message
+      type,
+      method: req.method
     });
 
-    // Fallback for GET
+    // Fallback untuk GET requests
     if (req.method === 'GET') {
       if (type === 'transactions') {
-        return res.status(200).json({ success: true, data: [] });
+        console.log('🔄 Using fallback: empty transactions');
+        return res.status(200).json({
+          success: true,
+          data: []
+        });
       }
+
       if (type === 'notes') {
-        return res.status(200).json({ 
-          success: true, 
-          data: "Selamat datang di Fyeliaa! 💰" 
+        console.log('🔄 Using fallback: default notes');
+        return res.status(200).json({
+          success: true,
+          data: "Selamat datang di Fyeliaa! 💰\nCatat semua transaksi keuangan Alfye & Aulia di sini."
         });
       }
     }
 
+    // Error response
     return res.status(500).json({
       success: false,
-      message: 'Gagal terhubung ke server: ' + error.message
+      message: error.name === 'AbortError' 
+        ? 'Request timeout. Server terlalu lama merespons.' 
+        : 'Gagal terhubung ke server. Coba lagi dalam beberapa saat.',
+      error: error.message
     });
   }
 }
-
