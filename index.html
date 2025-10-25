@@ -537,93 +537,62 @@
             }
         }
 
-        // Fungsi untuk menambah transaksi - FIXED
+        // Fungsi addTransaction - SUPER SIMPLE
 async function addTransaction(e) {
     e.preventDefault();
     
     const nama = document.getElementById('nama').value;
     const jenis = document.getElementById('jenis').value;
-    const nominal = parseInt(document.getElementById('nominal').value);
+    const nominal = document.getElementById('nominal').value;
     const keterangan = document.getElementById('keterangan').value;
     const tanggal = document.getElementById('tanggal').value;
-    
-    console.log('📝 Form data:', { nama, jenis, nominal, keterangan, tanggal });
     
     if (!nama || !jenis || !nominal || !tanggal) {
         showNotification('Harap isi semua field!', 'warning');
         return;
     }
     
-    if (nominal <= 0) {
-        showNotification('Nominal harus lebih dari 0!', 'warning');
-        return;
-    }
-    
-    // Format tanggal untuk display
-    const tanggalDisplay = new Date(tanggal).toLocaleDateString('id-ID', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
-    });
-    
-    const transactionData = {
-        tanggal: tanggalDisplay,
-        tanggalAsli: tanggal,
-        nama: nama,
-        jenis: jenis,
-        nominal: nominal,
-        keterangan: keterangan || '-'
-    };
+    // Format tanggal simple
+    const tanggalDisplay = new Date(tanggal).toLocaleDateString('id-ID');
     
     try {
-        console.log('🚀 Saving transaction to Vercel API...');
-        console.log('📤 Data:', transactionData);
-        
         const response = await fetch(API_BASE_URL + '?type=transactions', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify(transactionData)
+            body: JSON.stringify({
+                tanggal: tanggalDisplay,
+                tanggalAsli: tanggal,
+                nama: nama,
+                jenis: jenis,
+                nominal: parseInt(nominal),
+                keterangan: keterangan || '-'
+            })
         });
         
-        console.log('📄 Vercel Response status:', response.status);
-        
-        if (!response.ok) {
-            throw new Error(`Vercel API error: ${response.status}`);
-        }
-        
         const result = await response.json();
-        console.log('💾 Vercel Response:', result);
         
         if (result.success) {
-            // Refresh data dari server untuk memastikan data tersimpan
+            // RELOAD data dari server
             await loadTransactions();
             
             // Update UI
             renderTransactions();
             updateBalance();
             updateChart();
-            populateYearFilters();
             
             // Reset form
             transactionForm.reset();
-            tanggalInput.value = new Date().toISOString().split('T')[0];
+            document.getElementById('tanggal').value = new Date().toISOString().split('T')[0];
             
-            showNotification(`Transaksi berhasil disimpan! ✅ ${formatCurrency(nominal)}`, 'success');
-            
-            // Test: Cek data setelah simpan
-            console.log('🔄 Checking data after save...');
-            const checkResponse = await fetch(API_BASE_URL + '?type=transactions');
-            const checkData = await checkResponse.json();
-            console.log('📊 Data after save:', checkData);
-            
+            showNotification(`Transaksi berhasil disimpan! ✅`, 'success');
         } else {
-            throw new Error(result.message || 'Gagal menyimpan transaksi');
+            showNotification('Gagal: ' + result.message, 'error');
         }
     } catch (error) {
-        console.error('❌ Save error:', error);
-        showNotification('Gagal menyimpan transaksi: ' + error.message, 'error');
+        console.error('Error:', error);
+        showNotification('Gagal menyimpan transaksi', 'error');
     }
 }
         // Fungsi untuk menyimpan catatan
@@ -956,6 +925,7 @@ async function addTransaction(e) {
     </script>
 </body>
 </html>
+
 
 
 
