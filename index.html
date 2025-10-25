@@ -7,23 +7,15 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        .toast-container {
-            z-index: 1055;
-        }
-        .fade-in {
-            animation: fadeIn 0.3s ease-in;
-        }
+        .toast-container { z-index: 1055; }
+        .fade-in { animation: fadeIn 0.3s ease-in; }
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(-10px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        .navbar-toggler {
-            border: none;
-        }
-        .navbar-toggler:focus {
-            box-shadow: none;
-        }
-        .card {
+        .navbar-toggler { border: none; }
+        .navbar-toggler:focus { box-shadow: none; }
+        .card { 
             box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
             border: 1px solid rgba(0, 0, 0, 0.125);
         }
@@ -44,27 +36,15 @@
             height: 3px;
             background-color: #198754;
         }
-        .stat-card {
-            border-radius: 10px;
-            overflow: hidden;
-        }
+        .stat-card { border-radius: 10px; overflow: hidden; }
         .transaction-item {
             border-left: 4px solid;
             transition: all 0.2s ease;
         }
-        .transaction-item:hover {
-            transform: translateX(5px);
-        }
-        .transaction-income {
-            border-left-color: #198754;
-        }
-        .transaction-expense {
-            border-left-color: #dc3545;
-        }
-        .btn-action {
-            padding: 0.25rem 0.5rem;
-            font-size: 0.875rem;
-        }
+        .transaction-item:hover { transform: translateX(5px); }
+        .transaction-income { border-left-color: #198754; }
+        .transaction-expense { border-left-color: #dc3545; }
+        .btn-action { padding: 0.25rem 0.5rem; font-size: 0.875rem; }
         .loading-spinner {
             display: inline-block;
             width: 1rem;
@@ -79,13 +59,8 @@
             100% { transform: rotate(360deg); }
         }
         @media (max-width: 768px) {
-            .container {
-                padding-left: 15px;
-                padding-right: 15px;
-            }
-            .card-body {
-                padding: 1rem;
-            }
+            .container { padding-left: 15px; padding-right: 15px; }
+            .card-body { padding: 1rem; }
             .navbar-collapse {
                 background-color: #198754;
                 padding: 1rem;
@@ -115,18 +90,10 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="#dashboard">Dashboard</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#input-transaksi">Input Transaksi</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#riwayat">Riwayat</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#catatan">Catatan</a>
-                    </li>
+                    <li class="nav-item"><a class="nav-link" href="#dashboard">Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#input-transaksi">Input Transaksi</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#riwayat">Riwayat</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#catatan">Catatan</a></li>
                 </ul>
             </div>
         </div>
@@ -381,544 +348,521 @@
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
 
-    <!DOCTYPE html>
-<html lang="id">
-<head>
-    <!-- ... head content tetap sama ... -->
-</head>
-<body class="bg-light">
-<script>
-    // GOOGLE SHEETS AS MAIN DATABASE
-    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx8gFsR10kWY6tEuD40YaQ_Ja0qSnV8pH7Vw2RhbBKsyve5DFmQP3QZVt-YMZP7LrcT/exec';
+    <script>
+        // GOOGLE SHEETS AS MAIN DATABASE
+        // GANTI URL_INI dengan URL deployment Google Apps Script yang baru
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/URL_DEPLOYMENT_BARU/exec';
 
-    // Data aplikasi
-    let transactions = [];
-    let notes = '';
-    let savingsChart = null;
+        // Data aplikasi
+        let transactions = [];
+        let notes = '';
+        let savingsChart = null;
 
-    // Elemen DOM
-    const transactionForm = document.getElementById('transaction-form');
-    const transactionList = document.getElementById('transaction-list');
-    const totalSaldoElement = document.getElementById('total-saldo');
-    const totalPemasukanElement = document.getElementById('total-pemasukan');
-    const totalPengeluaranElement = document.getElementById('total-pengeluaran');
-    const filterNama = document.getElementById('filter-nama');
-    const filterJenis = document.getElementById('filter-jenis');
-    const filterBulan = document.getElementById('filter-bulan');
-    const filterTahun = document.getElementById('filter-tahun');
-    const resetFilterButton = document.getElementById('reset-filter');
-    const notesContent = document.getElementById('notes-content');
-    const notesInput = document.getElementById('notes-input');
-    const saveNotesButton = document.getElementById('save-notes');
-    const tanggalInput = document.getElementById('tanggal');
+        // Elemen DOM
+        const transactionForm = document.getElementById('transaction-form');
+        const transactionList = document.getElementById('transaction-list');
+        const totalSaldoElement = document.getElementById('total-saldo');
+        const totalPemasukanElement = document.getElementById('total-pemasukan');
+        const totalPengeluaranElement = document.getElementById('total-pengeluaran');
+        const filterNama = document.getElementById('filter-nama');
+        const filterJenis = document.getElementById('filter-jenis');
+        const filterBulan = document.getElementById('filter-bulan');
+        const filterTahun = document.getElementById('filter-tahun');
+        const resetFilterButton = document.getElementById('reset-filter');
+        const notesContent = document.getElementById('notes-content');
+        const notesInput = document.getElementById('notes-input');
+        const saveNotesButton = document.getElementById('save-notes');
+        const tanggalInput = document.getElementById('tanggal');
 
-    // Inisialisasi
-    document.addEventListener('DOMContentLoaded', async function() {
-        console.log('🚀 Fyeliaa Starting...');
-        tanggalInput.value = new Date().toISOString().split('T')[0];
-        
-        await loadAllData();
-        
-        transactionForm.addEventListener('submit', addTransaction);
-        saveNotesButton.addEventListener('click', saveNotes);
-        filterNama.addEventListener('change', filterTransactions);
-        filterJenis.addEventListener('change', filterTransactions);
-        filterBulan.addEventListener('change', filterTransactions);
-        filterTahun.addEventListener('change', filterTransactions);
-        resetFilterButton.addEventListener('click', resetFilters);
+        // Inisialisasi
+        document.addEventListener('DOMContentLoaded', async function() {
+            console.log('🚀 Fyeliaa Starting...');
+            tanggalInput.value = new Date().toISOString().split('T')[0];
+            
+            await loadAllData();
+            
+            transactionForm.addEventListener('submit', addTransaction);
+            saveNotesButton.addEventListener('click', saveNotes);
+            filterNama.addEventListener('change', filterTransactions);
+            filterJenis.addEventListener('change', filterTransactions);
+            filterBulan.addEventListener('change', filterTransactions);
+            filterTahun.addEventListener('change', filterTransactions);
+            resetFilterButton.addEventListener('click', resetFilters);
 
-        showNotification('Fyeliaa siap digunakan! 🎉', 'success');
-    });
+            showNotification('Fyeliaa siap digunakan! 🎉', 'success');
+        });
 
-    // Fungsi untuk memuat semua data dari Google Sheets
-    async function loadAllData() {
-        try {
-            showNotification('Memuat data dari server...', 'info');
-            
-            await loadTransactions();
-            await loadNotes();
-            
-            renderTransactions();
-            updateBalance();
-            initChart();
-            populateYearFilters();
-            
-            showNotification('Data berhasil dimuat! ✅', 'success');
-            
-        } catch (error) {
-            console.error('Error loading data:', error);
-            showNotification('Gagal memuat data dari server', 'error');
-        }
-    }
-
-    // Fungsi untuk memuat transaksi dari Google Sheets
-    async function loadTransactions() {
-        try {
-            console.log('📥 Loading transactions from Google Sheets...');
-            const response = await fetch(GOOGLE_SCRIPT_URL + '?type=transactions');
-            
-            if (!response.ok) throw new Error('Network error');
-            
-            const result = await response.json();
-            console.log('📄 Transactions response:', result);
-            
-            if (result.success) {
-                transactions = result.data || [];
-                console.log('✅ Loaded', transactions.length, 'transactions from Google Sheets');
-            } else {
-                throw new Error(result.message);
-            }
-        } catch (error) {
-            console.error('❌ Load transactions error:', error);
-            transactions = [];
-            throw error;
-        }
-    }
-
-    // Fungsi untuk memuat catatan dari Google Sheets
-    async function loadNotes() {
-        try {
-            console.log('📝 Loading notes from Google Sheets...');
-            const response = await fetch(GOOGLE_SCRIPT_URL + '?type=notes');
-            const result = await response.json();
-            
-            if (result.success) {
-                notes = result.data;
-                notesContent.innerHTML = notes ? `<p class="mb-0">${notes.replace(/\n/g, '<br>')}</p>` : 'Belum ada catatan.';
-                notesInput.value = notes;
-                console.log('✅ Notes loaded from Google Sheets');
-            } else {
-                throw new Error(result.message);
-            }
-        } catch (error) {
-            console.error('❌ Load notes error:', error);
-            notes = "Selamat datang di Fyeliaa! 💰";
-            notesContent.innerHTML = `<p class="mb-0">${notes}</p>`;
-            notesInput.value = notes;
-        }
-    }
-
-    // FUNGSI SIMPAN TRANSAKSI KE GOOGLE SHEETS
-    async function addTransaction(e) {
-        e.preventDefault();
-        
-        const nama = document.getElementById('nama').value;
-        const jenis = document.getElementById('jenis').value;
-        const nominal = document.getElementById('nominal').value;
-        const keterangan = document.getElementById('keterangan').value;
-        const tanggal = document.getElementById('tanggal').value;
-        
-        if (!nama || !jenis || !nominal || !tanggal) {
-            showNotification('Harap isi semua field!', 'warning');
-            return;
-        }
-        
-        if (parseInt(nominal) <= 0) {
-            showNotification('Nominal harus lebih dari 0!', 'warning');
-            return;
-        }
-        
-        // Format tanggal
-        const tanggalDisplay = new Date(tanggal).toLocaleDateString('id-ID');
-        
-        // Buat form data
-        const formData = new URLSearchParams();
-        formData.append('type', 'transactions');
-        formData.append('method', 'POST');
-        formData.append('tanggal', tanggalDisplay);
-        formData.append('tanggalAsli', tanggal);
-        formData.append('nama', nama);
-        formData.append('jenis', jenis);
-        formData.append('nominal', nominal);
-        formData.append('keterangan', keterangan || '-');
-        
-        try {
-            showNotification('Menyimpan ke server...', 'info');
-            
-            const response = await fetch(GOOGLE_SCRIPT_URL, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: formData.toString()
-            });
-            
-            const result = await response.json();
-            
-            if (result.success) {
-                // Refresh data dari server
+        // Fungsi untuk memuat semua data dari Google Sheets
+        async function loadAllData() {
+            try {
+                showNotification('Memuat data dari server...', 'info');
+                
                 await loadTransactions();
+                await loadNotes();
+                
                 renderTransactions();
                 updateBalance();
-                updateChart();
+                initChart();
                 populateYearFilters();
                 
-                // Reset form
-                transactionForm.reset();
-                tanggalInput.value = new Date().toISOString().split('T')[0];
+                showNotification('Data berhasil dimuat! ✅', 'success');
                 
-                showNotification(`Transaksi berhasil disimpan! ✅ ${formatCurrency(parseInt(nominal))}`, 'success');
-            } else {
-                throw new Error(result.message);
+            } catch (error) {
+                console.error('Error loading data:', error);
+                showNotification('Gagal memuat data dari server', 'error');
             }
-        } catch (error) {
-            console.error('❌ Save error:', error);
-            showNotification('Gagal menyimpan transaksi: ' + error.message, 'error');
         }
-    }
 
-    // Fungsi untuk menyimpan catatan ke Google Sheets
-    async function saveNotes() {
-        const newNotes = notesInput.value.trim();
-        
-        if (!newNotes) {
-            showNotification('Catatan tidak boleh kosong!', 'warning');
-            return;
+        // Fungsi untuk memuat transaksi dari Google Sheets
+        async function loadTransactions() {
+            try {
+                console.log('📥 Loading transactions from Google Sheets...');
+                const response = await fetch(GOOGLE_SCRIPT_URL + '?type=transactions');
+                
+                if (!response.ok) throw new Error('Network error');
+                
+                const result = await response.json();
+                console.log('📄 Transactions response:', result);
+                
+                if (result.success) {
+                    transactions = result.data || [];
+                    console.log('✅ Loaded', transactions.length, 'transactions from Google Sheets');
+                } else {
+                    throw new Error(result.message);
+                }
+            } catch (error) {
+                console.error('❌ Load transactions error:', error);
+                transactions = [];
+                throw error;
+            }
         }
-        
-        const formData = new URLSearchParams();
-        formData.append('type', 'notes');
-        formData.append('method', 'POST');
-        formData.append('notes', newNotes);
-        
-        try {
-            showNotification('Menyimpan catatan...', 'info');
+
+        // Fungsi untuk memuat catatan dari Google Sheets
+        async function loadNotes() {
+            try {
+                console.log('📝 Loading notes from Google Sheets...');
+                const response = await fetch(GOOGLE_SCRIPT_URL + '?type=notes');
+                const result = await response.json();
+                
+                if (result.success) {
+                    notes = result.data;
+                    notesContent.innerHTML = notes ? `<p class="mb-0">${notes.replace(/\n/g, '<br>')}</p>` : 'Belum ada catatan.';
+                    notesInput.value = notes;
+                    console.log('✅ Notes loaded from Google Sheets');
+                } else {
+                    throw new Error(result.message);
+                }
+            } catch (error) {
+                console.error('❌ Load notes error:', error);
+                notes = "Selamat datang di Fyeliaa! 💰";
+                notesContent.innerHTML = `<p class="mb-0">${notes}</p>`;
+                notesInput.value = notes;
+            }
+        }
+
+        // FUNGSI SIMPAN TRANSAKSI KE GOOGLE SHEETS
+        async function addTransaction(e) {
+            e.preventDefault();
             
-            const response = await fetch(GOOGLE_SCRIPT_URL, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
+            const nama = document.getElementById('nama').value;
+            const jenis = document.getElementById('jenis').value;
+            const nominal = document.getElementById('nominal').value;
+            const keterangan = document.getElementById('keterangan').value;
+            const tanggal = document.getElementById('tanggal').value;
+            
+            if (!nama || !jenis || !nominal || !tanggal) {
+                showNotification('Harap isi semua field!', 'warning');
+                return;
+            }
+            
+            if (parseInt(nominal) <= 0) {
+                showNotification('Nominal harus lebih dari 0!', 'warning');
+                return;
+            }
+            
+            // Format tanggal
+            const tanggalDisplay = new Date(tanggal).toLocaleDateString('id-ID');
+            
+            // Buat form data
+            const formData = new URLSearchParams();
+            formData.append('type', 'transactions');
+            formData.append('method', 'POST');
+            formData.append('tanggal', tanggalDisplay);
+            formData.append('tanggalAsli', tanggal);
+            formData.append('nama', nama);
+            formData.append('jenis', jenis);
+            formData.append('nominal', nominal);
+            formData.append('keterangan', keterangan || '-');
+            
+            try {
+                showNotification('Menyimpan ke server...', 'info');
+                
+                const response = await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: formData.toString()
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Refresh data dari server
+                    await loadTransactions();
+                    renderTransactions();
+                    updateBalance();
+                    updateChart();
+                    populateYearFilters();
+                    
+                    // Reset form
+                    transactionForm.reset();
+                    tanggalInput.value = new Date().toISOString().split('T')[0];
+                    
+                    showNotification(`Transaksi berhasil disimpan! ✅ ${formatCurrency(parseInt(nominal))}`, 'success');
+                } else {
+                    throw new Error(result.message);
+                }
+            } catch (error) {
+                console.error('❌ Save error:', error);
+                showNotification('Gagal menyimpan transaksi: ' + error.message, 'error');
+            }
+        }
+
+        // Fungsi untuk menyimpan catatan ke Google Sheets
+        async function saveNotes() {
+            const newNotes = notesInput.value.trim();
+            
+            if (!newNotes) {
+                showNotification('Catatan tidak boleh kosong!', 'warning');
+                return;
+            }
+            
+            const formData = new URLSearchParams();
+            formData.append('type', 'notes');
+            formData.append('method', 'POST');
+            formData.append('notes', newNotes);
+            
+            try {
+                showNotification('Menyimpan catatan...', 'info');
+                
+                const response = await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: formData.toString()
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    notes = newNotes;
+                    notesContent.innerHTML = `<p class="mb-0">${notes.replace(/\n/g, '<br>')}</p>`;
+                    showNotification('Catatan berhasil disimpan! 📝', 'success');
+                } else {
+                    throw new Error(result.message);
+                }
+            } catch (error) {
+                console.error('Save notes error:', error);
+                showNotification('Gagal menyimpan catatan', 'error');
+            }
+        }
+
+        // Fungsi untuk menghapus transaksi dari Google Sheets
+        async function deleteTransaction(id) {
+            if (!confirm('Hapus transaksi ini?')) return;
+            
+            const formData = new URLSearchParams();
+            formData.append('type', 'transactions');
+            formData.append('method', 'DELETE');
+            formData.append('id', id);
+            
+            try {
+                showNotification('Menghapus...', 'info');
+                
+                const response = await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: formData.toString()
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Refresh data dari server
+                    await loadTransactions();
+                    renderTransactions();
+                    updateBalance();
+                    updateChart();
+                    showNotification('Transaksi dihapus! 🗑️', 'success');
+                } else {
+                    throw new Error(result.message);
+                }
+            } catch (error) {
+                console.error('Delete error:', error);
+                showNotification('Gagal menghapus transaksi', 'error');
+            }
+        }
+
+        // Fungsi untuk merender daftar transaksi
+        function renderTransactions(filteredTransactions = null) {
+            const transactionsToRender = filteredTransactions || transactions;
+            const tbody = document.getElementById('transaction-list');
+            
+            if (transactionsToRender.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4">Tidak ada transaksi</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = transactionsToRender.map(transaction => {
+                const nominalClass = transaction.jenis === 'masuk' ? 'text-success' : 'text-danger';
+                const nominalPrefix = transaction.jenis === 'masuk' ? '+' : '-';
+                const jenisText = transaction.jenis === 'masuk' ? 'Uang Masuk' : 'Uang Keluar';
+                
+                return `
+                    <tr class="transaction-item ${transaction.jenis === 'masuk' ? 'transaction-income' : 'transaction-expense'}">
+                        <td>${transaction.tanggal}</td>
+                        <td>${transaction.nama}</td>
+                        <td>${jenisText}</td>
+                        <td class="${nominalClass} fw-bold">${nominalPrefix} ${formatCurrency(transaction.nominal)}</td>
+                        <td>${transaction.keterangan || '-'}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-danger btn-action" onclick="deleteTransaction('${transaction.id}')">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                                    <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+                                    <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+                                </svg>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Fungsi untuk memperbarui saldo
+        function updateBalance() {
+            let totalSaldo = 0;
+            let totalPemasukan = 0;
+            let totalPengeluaran = 0;
+            
+            transactions.forEach(transaction => {
+                if (transaction.jenis === 'masuk') {
+                    totalSaldo += transaction.nominal;
+                    totalPemasukan += transaction.nominal;
+                } else {
+                    totalSaldo -= transaction.nominal;
+                    totalPengeluaran += transaction.nominal;
+                }
+            });
+            
+            totalSaldoElement.textContent = formatCurrency(totalSaldo);
+            totalPemasukanElement.textContent = formatCurrency(totalPemasukan);
+            totalPengeluaranElement.textContent = formatCurrency(totalPengeluaran);
+        }
+
+        // Fungsi untuk memfilter transaksi
+        function filterTransactions() {
+            const namaFilter = filterNama.value;
+            const jenisFilter = filterJenis.value;
+            const bulanFilter = filterBulan.value;
+            const tahunFilter = filterTahun.value;
+            
+            let filteredTransactions = transactions;
+            
+            if (namaFilter) {
+                filteredTransactions = filteredTransactions.filter(transaction => transaction.nama === namaFilter);
+            }
+            
+            if (jenisFilter) {
+                filteredTransactions = filteredTransactions.filter(transaction => transaction.jenis === jenisFilter);
+            }
+            
+            if (bulanFilter) {
+                filteredTransactions = filteredTransactions.filter(transaction => {
+                    const transactionMonth = new Date(transaction.tanggalAsli).getMonth() + 1;
+                    return transactionMonth.toString() === bulanFilter;
+                });
+            }
+            
+            if (tahunFilter) {
+                filteredTransactions = filteredTransactions.filter(transaction => {
+                    const transactionYear = new Date(transaction.tanggalAsli).getFullYear();
+                    return transactionYear.toString() === tahunFilter;
+                });
+            }
+            
+            renderTransactions(filteredTransactions);
+        }
+
+        // Fungsi untuk mereset filter
+        function resetFilters() {
+            filterNama.value = '';
+            filterJenis.value = '';
+            filterBulan.value = '';
+            filterTahun.value = '';
+            renderTransactions();
+            showNotification('Filter direset!', 'info');
+        }
+
+        // Fungsi untuk mengisi filter tahun
+        function populateYearFilters() {
+            const years = new Set();
+            transactions.forEach(transaction => {
+                const year = new Date(transaction.tanggalAsli).getFullYear();
+                years.add(year);
+            });
+            
+            const currentYear = new Date().getFullYear();
+            years.add(currentYear);
+            
+            const sortedYears = Array.from(years).sort((a, b) => b - a);
+            
+            const filterTahunElement = document.getElementById('filter-tahun');
+            if (filterTahunElement) {
+                filterTahunElement.innerHTML = '<option value="">Semua Tahun</option>';
+                sortedYears.forEach(year => {
+                    filterTahunElement.innerHTML += `<option value="${year}">${year}</option>`;
+                });
+            }
+        }
+
+        // Fungsi untuk inisialisasi grafik
+        function initChart() {
+            const ctx = document.getElementById('savings-chart').getContext('2d');
+            const labels = [];
+            const data = [];
+            
+            let currentBalance = 0;
+            const sortedTransactions = [...transactions].sort((a, b) => 
+                new Date(a.tanggalAsli) - new Date(b.tanggalAsli)
+            );
+            
+            sortedTransactions.forEach(transaction => {
+                if (transaction.jenis === 'masuk') {
+                    currentBalance += transaction.nominal;
+                } else {
+                    currentBalance -= transaction.nominal;
+                }
+                labels.push(transaction.tanggal);
+                data.push(currentBalance);
+            });
+            
+            if (labels.length === 0) {
+                labels.push('Mulai');
+                data.push(0);
+            }
+            
+            savingsChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Saldo Tabungan',
+                        data: data,
+                        borderColor: '#198754',
+                        backgroundColor: 'rgba(25, 135, 84, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }]
                 },
-                body: formData.toString()
-            });
-            
-            const result = await response.json();
-            
-            if (result.success) {
-                notes = newNotes;
-                notesContent.innerHTML = `<p class="mb-0">${notes.replace(/\n/g, '<br>')}</p>`;
-                showNotification('Catatan berhasil disimpan! 📝', 'success');
-            } else {
-                throw new Error(result.message);
-            }
-        } catch (error) {
-            console.error('Save notes error:', error);
-            showNotification('Gagal menyimpan catatan', 'error');
-        }
-    }
-
-    // Fungsi untuk menghapus transaksi dari Google Sheets
-    async function deleteTransaction(id) {
-        if (!confirm('Hapus transaksi ini?')) return;
-        
-        const formData = new URLSearchParams();
-        formData.append('type', 'transactions');
-        formData.append('method', 'DELETE');
-        formData.append('id', id);
-        
-        try {
-            showNotification('Menghapus...', 'info');
-            
-            const response = await fetch(GOOGLE_SCRIPT_URL, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: formData.toString()
-            });
-            
-            const result = await response.json();
-            
-            if (result.success) {
-                // Refresh data dari server
-                await loadTransactions();
-                renderTransactions();
-                updateBalance();
-                updateChart();
-                showNotification('Transaksi dihapus! 🗑️', 'success');
-            } else {
-                throw new Error(result.message);
-            }
-        } catch (error) {
-            console.error('Delete error:', error);
-            showNotification('Gagal menghapus transaksi', 'error');
-        }
-    }
-
-    // ... (fungsi renderTransactions, updateBalance, filterTransactions, resetFilters, populateYearFilters, initChart, updateChart TETAP SAMA seperti sebelumnya)
-
-    // Fungsi untuk merender daftar transaksi
-    function renderTransactions(filteredTransactions = null) {
-        const transactionsToRender = filteredTransactions || transactions;
-        const tbody = document.getElementById('transaction-list');
-        
-        if (transactionsToRender.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4">Tidak ada transaksi</td></tr>';
-            return;
-        }
-        
-        tbody.innerHTML = transactionsToRender.map(transaction => {
-            const nominalClass = transaction.jenis === 'masuk' ? 'text-success' : 'text-danger';
-            const nominalPrefix = transaction.jenis === 'masuk' ? '+' : '-';
-            const jenisText = transaction.jenis === 'masuk' ? 'Uang Masuk' : 'Uang Keluar';
-            
-            return `
-                <tr class="transaction-item ${transaction.jenis === 'masuk' ? 'transaction-income' : 'transaction-expense'}">
-                    <td>${transaction.tanggal}</td>
-                    <td>${transaction.nama}</td>
-                    <td>${jenisText}</td>
-                    <td class="${nominalClass} fw-bold">${nominalPrefix} ${formatCurrency(transaction.nominal)}</td>
-                    <td>${transaction.keterangan || '-'}</td>
-                    <td>
-                        <button class="btn btn-sm btn-outline-danger btn-action" onclick="deleteTransaction('${transaction.id}')">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
-                                <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
-                                <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
-                            </svg>
-                        </button>
-                    </td>
-                </tr>
-            `;
-        }).join('');
-    }
-
-    // Fungsi untuk memperbarui saldo
-    function updateBalance() {
-        let totalSaldo = 0;
-        let totalPemasukan = 0;
-        let totalPengeluaran = 0;
-        
-        transactions.forEach(transaction => {
-            if (transaction.jenis === 'masuk') {
-                totalSaldo += transaction.nominal;
-                totalPemasukan += transaction.nominal;
-            } else {
-                totalSaldo -= transaction.nominal;
-                totalPengeluaran += transaction.nominal;
-            }
-        });
-        
-        totalSaldoElement.textContent = formatCurrency(totalSaldo);
-        totalPemasukanElement.textContent = formatCurrency(totalPemasukan);
-        totalPengeluaranElement.textContent = formatCurrency(totalPengeluaran);
-    }
-
-    // Fungsi untuk memfilter transaksi
-    function filterTransactions() {
-        const namaFilter = filterNama.value;
-        const jenisFilter = filterJenis.value;
-        const bulanFilter = filterBulan.value;
-        const tahunFilter = filterTahun.value;
-        
-        let filteredTransactions = transactions;
-        
-        if (namaFilter) {
-            filteredTransactions = filteredTransactions.filter(transaction => transaction.nama === namaFilter);
-        }
-        
-        if (jenisFilter) {
-            filteredTransactions = filteredTransactions.filter(transaction => transaction.jenis === jenisFilter);
-        }
-        
-        if (bulanFilter) {
-            filteredTransactions = filteredTransactions.filter(transaction => {
-                const transactionMonth = new Date(transaction.tanggalAsli).getMonth() + 1;
-                return transactionMonth.toString() === bulanFilter;
-            });
-        }
-        
-        if (tahunFilter) {
-            filteredTransactions = filteredTransactions.filter(transaction => {
-                const transactionYear = new Date(transaction.tanggalAsli).getFullYear();
-                return transactionYear.toString() === tahunFilter;
-            });
-        }
-        
-        renderTransactions(filteredTransactions);
-    }
-
-    // Fungsi untuk mereset filter
-    function resetFilters() {
-        filterNama.value = '';
-        filterJenis.value = '';
-        filterBulan.value = '';
-        filterTahun.value = '';
-        renderTransactions();
-        showNotification('Filter direset!', 'info');
-    }
-
-    // Fungsi untuk mengisi filter tahun
-    function populateYearFilters() {
-        const years = new Set();
-        transactions.forEach(transaction => {
-            const year = new Date(transaction.tanggalAsli).getFullYear();
-            years.add(year);
-        });
-        
-        const currentYear = new Date().getFullYear();
-        years.add(currentYear);
-        
-        const sortedYears = Array.from(years).sort((a, b) => b - a);
-        
-        const filterTahunElement = document.getElementById('filter-tahun');
-        if (filterTahunElement) {
-            filterTahunElement.innerHTML = '<option value="">Semua Tahun</option>';
-            sortedYears.forEach(year => {
-                filterTahunElement.innerHTML += `<option value="${year}">${year}</option>`;
-            });
-        }
-    }
-
-    // Fungsi untuk inisialisasi grafik
-    function initChart() {
-        const ctx = document.getElementById('savings-chart').getContext('2d');
-        const labels = [];
-        const data = [];
-        
-        let currentBalance = 0;
-        const sortedTransactions = [...transactions].sort((a, b) => 
-            new Date(a.tanggalAsli) - new Date(b.tanggalAsli)
-        );
-        
-        sortedTransactions.forEach(transaction => {
-            if (transaction.jenis === 'masuk') {
-                currentBalance += transaction.nominal;
-            } else {
-                currentBalance -= transaction.nominal;
-            }
-            labels.push(transaction.tanggal);
-            data.push(currentBalance);
-        });
-        
-        if (labels.length === 0) {
-            labels.push('Mulai');
-            data.push(0);
-        }
-        
-        savingsChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Saldo Tabungan',
-                    data: data,
-                    borderColor: '#198754',
-                    backgroundColor: 'rgba(25, 135, 84, 0.1)',
-                    borderWidth: 2,
-                    fill: true,
-                    tension: 0.4
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            callback: function(value) {
-                                return 'Rp ' + value.toLocaleString('id-ID');
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return 'Rp ' + value.toLocaleString('id-ID');
+                                }
                             }
                         }
                     }
                 }
-            }
-        });
-    }
-
-    // Fungsi untuk memperbarui grafik
-    function updateChart() {
-        if (!savingsChart) return;
-        
-        const labels = [];
-        const data = [];
-        
-        let currentBalance = 0;
-        const sortedTransactions = [...transactions].sort((a, b) => 
-            new Date(a.tanggalAsli) - new Date(b.tanggalAsli)
-        );
-        
-        sortedTransactions.forEach(transaction => {
-            if (transaction.jenis === 'masuk') {
-                currentBalance += transaction.nominal;
-            } else {
-                currentBalance -= transaction.nominal;
-            }
-            labels.push(transaction.tanggal);
-            data.push(currentBalance);
-        });
-        
-        if (labels.length === 0) {
-            labels.push('Mulai');
-            data.push(0);
+            });
         }
-        
-        savingsChart.data.labels = labels;
-        savingsChart.data.datasets[0].data = data;
-        savingsChart.update();
-    }
 
-    // Fungsi untuk memformat mata uang
-    function formatCurrency(amount) {
-        return new Intl.NumberFormat('id-ID', {
-            style: 'currency',
-            currency: 'IDR',
-            minimumFractionDigits: 0
-        }).format(amount);
-    }
+        // Fungsi untuk memperbarui grafik
+        function updateChart() {
+            if (!savingsChart) return;
+            
+            const labels = [];
+            const data = [];
+            
+            let currentBalance = 0;
+            const sortedTransactions = [...transactions].sort((a, b) => 
+                new Date(a.tanggalAsli) - new Date(b.tanggalAsli)
+            );
+            
+            sortedTransactions.forEach(transaction => {
+                if (transaction.jenis === 'masuk') {
+                    currentBalance += transaction.nominal;
+                } else {
+                    currentBalance -= transaction.nominal;
+                }
+                labels.push(transaction.tanggal);
+                data.push(currentBalance);
+            });
+            
+            if (labels.length === 0) {
+                labels.push('Mulai');
+                data.push(0);
+            }
+            
+            savingsChart.data.labels = labels;
+            savingsChart.data.datasets[0].data = data;
+            savingsChart.update();
+        }
 
-    // Fungsi untuk menampilkan notifikasi
-    function showNotification(message, type = 'info') {
-        const toastContainer = document.querySelector('.toast-container');
-        
-        const toast = document.createElement('div');
-        toast.className = `toast align-items-center text-white bg-${type === 'error' ? 'danger' : type} border-0 fade-in`;
-        toast.setAttribute('role', 'alert');
-        toast.setAttribute('aria-live', 'assertive');
-        toast.setAttribute('aria-atomic', 'true');
-        
-        toast.innerHTML = `
-            <div class="d-flex">
-                <div class="toast-body">
-                    ${message}
+        // Fungsi untuk memformat mata uang
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('id-ID', {
+                style: 'currency',
+                currency: 'IDR',
+                minimumFractionDigits: 0
+            }).format(amount);
+        }
+
+        // Fungsi untuk menampilkan notifikasi
+        function showNotification(message, type = 'info') {
+            const toastContainer = document.querySelector('.toast-container');
+            
+            const toast = document.createElement('div');
+            toast.className = `toast align-items-center text-white bg-${type === 'error' ? 'danger' : type} border-0 fade-in`;
+            toast.setAttribute('role', 'alert');
+            toast.setAttribute('aria-live', 'assertive');
+            toast.setAttribute('aria-atomic', 'true');
+            
+            toast.innerHTML = `
+                <div class="d-flex">
+                    <div class="toast-body">
+                        ${message}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
                 </div>
-                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-            </div>
-        `;
-        
-        toastContainer.appendChild(toast);
-        
-        const bsToast = new bootstrap.Toast(toast, {
-            autohide: true,
-            delay: 4000
-        });
-        
-        bsToast.show();
-        
-        toast.addEventListener('hidden.bs.toast', () => {
-            toast.remove();
-        });
-    }
-</script>
+            `;
+            
+            toastContainer.appendChild(toast);
+            
+            const bsToast = new bootstrap.Toast(toast, {
+                autohide: true,
+                delay: 4000
+            });
+            
+            bsToast.show();
+            
+            toast.addEventListener('hidden.bs.toast', () => {
+                toast.remove();
+            });
+        }
+    </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
