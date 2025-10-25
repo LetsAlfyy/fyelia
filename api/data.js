@@ -1,8 +1,7 @@
-// api/data.js - FIXED VERSION
-const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzzbkvEBnYpoM_yFtNgFcTlLaFiRk7UAsI2Qsy3DLZMEfPx2pr_Q0qVjM4jvwvihKRDkw/exec';
+// api/data.js
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxzk-86sVOXV9ZJf1ihV15pe0YHEvxmq9yQE00ZO762KM6DwotMTDL84uPh1h-19hB1/exec';
 
 export default async function handler(req, res) {
-  // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -21,10 +20,8 @@ export default async function handler(req, res) {
       body: req.body 
     });
 
-    // Build URL untuk Google Apps Script
     let url = `${GOOGLE_SCRIPT_URL}?type=${type}`;
     
-    // Tambahkan parameter method untuk DELETE
     if (req.method === 'DELETE') {
       url += `&method=DELETE`;
     }
@@ -36,20 +33,18 @@ export default async function handler(req, res) {
     console.log('🔗 Calling Google Sheets:', url);
 
     const options = {
-      method: req.method === 'DELETE' ? 'GET' : req.method, // DELETE jadi GET dengan parameter
+      method: req.method === 'DELETE' ? 'GET' : req.method,
       headers: {
         'Content-Type': 'application/json',
       },
       redirect: 'follow'
     };
 
-    // Add body untuk POST requests
     if (req.method === 'POST' && req.body) {
       options.body = JSON.stringify(req.body);
       console.log('📤 Sending body:', options.body);
     }
 
-    // Timeout setelah 15 detik
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 15000);
     options.signal = controller.signal;
@@ -67,7 +62,6 @@ export default async function handler(req, res) {
       const text = await response.text();
       console.log('📄 Response text:', text);
       
-      // Try to parse as JSON
       try {
         result = JSON.parse(text);
       } catch (e) {
@@ -92,7 +86,6 @@ export default async function handler(req, res) {
       method: req.method
     });
 
-    // Fallback untuk GET requests
     if (req.method === 'GET') {
       if (type === 'transactions') {
         console.log('🔄 Using fallback: empty transactions');
@@ -111,7 +104,6 @@ export default async function handler(req, res) {
       }
     }
 
-    // Error response
     return res.status(500).json({
       success: false,
       message: error.name === 'AbortError' 
