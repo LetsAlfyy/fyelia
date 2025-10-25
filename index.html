@@ -538,6 +538,7 @@
         }
 
         // Temporary fallback di index.html
+// Fungsi untuk menambah transaksi - FIXED VERSION
 async function addTransaction(e) {
     e.preventDefault();
     
@@ -546,6 +547,8 @@ async function addTransaction(e) {
     const nominal = parseInt(document.getElementById('nominal').value);
     const keterangan = document.getElementById('keterangan').value;
     const tanggal = document.getElementById('tanggal').value;
+    
+    console.log('📝 Form data:', { nama, jenis, nominal, keterangan, tanggal });
     
     if (!nama || !jenis || !nominal || !tanggal) {
         showNotification('Harap isi semua field!', 'warning');
@@ -557,52 +560,69 @@ async function addTransaction(e) {
         return;
     }
     
-    const transaction = {
-        id: 'local-' + Date.now(),
+    const transactionData = {
         tanggal: formatDateForDisplay(tanggal),
         tanggalAsli: tanggal,
-        nama,
-        jenis,
-        nominal,
-        keterangan: keterangan || '-',
-        createdAt: new Date().toISOString()
+        nama: nama,
+        jenis: jenis,
+        nominal: nominal,
+        keterangan: keterangan || '-'
     };
     
     try {
-        // Coba simpan ke server dulu
+        console.log('🚀 Saving transaction...');
+        console.log('📤 Transaction data:', transactionData);
+        
+        // Buat URLSearchParams untuk form data
+        const formData = new URLSearchParams();
+        formData.append('tanggal', transactionData.tanggal);
+        formData.append('tanggalAsli', transactionData.tanggalAsli);
+        formData.append('nama', transactionData.nama);
+        formData.append('jenis', transactionData.jenis);
+        formData.append('nominal', transactionData.nominal.toString());
+        formData.append('keterangan', transactionData.keterangan);
+        
+        console.log('🔗 Form data:', formData.toString());
+        
         const response = await fetch(API_BASE_URL + '?type=transactions', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(transaction)
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: formData.toString()
         });
         
-        const result = await response.json();
+        console.log('📄 Response status:', response.status);
         
-        if (result.success) {
-            // Success - use server data
-            transactions.unshift(result.data);
-            showNotification(`Transaksi berhasil disimpan! ✅ ${formatCurrency(nominal)}`, 'success');
-        } else {
-            // Server error - use local data
-            transactions.unshift(transaction);
-            showNotification(`Transaksi disimpan secara lokal ⚠️ ${formatCurrency(nominal)}`, 'warning');
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
         
+        const result = await response.json();
+        console.log('💾 Save response:', result);
+        
+        if (result.success) {
+            // Tambahkan ke array lokal
+            transactions.unshift(result.data);
+            
+            // Update UI
+            renderTransactions();
+            updateBalance();
+            updateChart();
+            populateYearFilters();
+            
+            // Reset form
+            transactionForm.reset();
+            tanggalInput.value = new Date().toISOString().split('T')[0];
+            
+            showNotification(`Transaksi berhasil disimpan! ✅ ${formatCurrency(nominal)}`, 'success');
+        } else {
+            throw new Error(result.message || 'Gagal menyimpan transaksi');
+        }
     } catch (error) {
-        // Network error - use local data
-        transactions.unshift(transaction);
-        showNotification(`Transaksi disimpan secara lokal ⚠️ ${formatCurrency(nominal)}`, 'warning');
+        console.error('❌ Save error:', error);
+        showNotification('Gagal menyimpan transaksi: ' + error.message, 'error');
     }
-    
-    // Update UI
-    renderTransactions();
-    updateBalance();
-    updateChart();
-    populateYearFilters();
-    
-    // Reset form
-    transactionForm.reset();
-    tanggalInput.value = new Date().toISOString().split('T')[0];
 }
 
         // Fungsi untuk menyimpan catatan
@@ -935,6 +955,7 @@ async function addTransaction(e) {
     </script>
 </body>
 </html>
+
 
 
 
