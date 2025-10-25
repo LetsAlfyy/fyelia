@@ -390,8 +390,8 @@
     <!-- ... HTML content tetap sama sampai script ... -->
 
    <script>
-    // Langsung ke Google Script, bypass Vercel
-    const API_BASE_URL = 'https://script.google.com/macros/s/AKfycbx8gFsR10kWY6tEuD40YaQ_Ja0qSnV8pH7Vw2RhbBKsyve5DFmQP3QZVt-YMZP7LrcT/exec';
+    // SIMPLE VERSION - PAKE LOCALSTORAGE
+    const STORAGE_KEY = 'fyeliaa_data';
 
     // Data aplikasi
     let transactions = [];
@@ -415,9 +415,9 @@
     const tanggalInput = document.getElementById('tanggal');
 
     // Inisialisasi
-    document.addEventListener('DOMContentLoaded', async function() {
+    document.addEventListener('DOMContentLoaded', function() {
         tanggalInput.value = new Date().toISOString().split('T')[0];
-        await loadAllData();
+        loadAllData();
         
         transactionForm.addEventListener('submit', addTransaction);
         saveNotesButton.addEventListener('click', saveNotes);
@@ -430,54 +430,47 @@
         showNotification('Fyeliaa siap digunakan! 🎉', 'success');
     });
 
-    // Fungsi untuk memuat semua data
-    async function loadAllData() {
+    // Fungsi untuk memuat semua data dari localStorage
+    function loadAllData() {
         try {
-            await loadTransactions();
-            await loadNotes();
+            const savedData = localStorage.getItem(STORAGE_KEY);
+            if (savedData) {
+                const data = JSON.parse(savedData);
+                transactions = data.transactions || [];
+                notes = data.notes || '';
+            } else {
+                // Data default
+                transactions = [];
+                notes = "Selamat datang di Fyeliaa! 💰\nCatat semua transaksi keuangan Alfye & Aulia di sini.";
+            }
+            
+            notesContent.innerHTML = notes ? `<p class="mb-0">${notes.replace(/\n/g, '<br>')}</p>` : 'Belum ada catatan.';
+            notesInput.value = notes;
+            
             renderTransactions();
             updateBalance();
             initChart();
             populateYearFilters();
         } catch (error) {
-            showNotification('Gagal memuat data', 'error');
+            console.error('Error loading data:', error);
         }
     }
 
-    // Fungsi untuk memuat transaksi
-    async function loadTransactions() {
+    // Fungsi untuk menyimpan data ke localStorage
+    function saveAllData() {
         try {
-            const url = API_BASE_URL + '?type=transactions';
-            const response = await fetch(url);
-            const result = await response.json();
-            if (result.success) {
-                transactions = result.data || [];
-            }
+            const data = {
+                transactions: transactions,
+                notes: notes
+            };
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
         } catch (error) {
-            transactions = [];
+            console.error('Error saving data:', error);
         }
     }
 
-    // Fungsi untuk memuat catatan
-    async function loadNotes() {
-        try {
-            const url = API_BASE_URL + '?type=notes';
-            const response = await fetch(url);
-            const result = await response.json();
-            if (result.success) {
-                notes = result.data;
-                notesContent.innerHTML = notes ? `<p class="mb-0">${notes.replace(/\n/g, '<br>')}</p>` : 'Belum ada catatan.';
-                notesInput.value = notes;
-            }
-        } catch (error) {
-            notes = "Selamat datang di Fyeliaa! 💰";
-            notesContent.innerHTML = `<p class="mb-0">${notes}</p>`;
-            notesInput.value = notes;
-        }
-    }
-
-    // FUNGSI SIMPAN TRANSAKSI - FIXED
-    async function addTransaction(e) {
+    // FUNGSI SIMPAN TRANSAKSI - SIMPLE
+    function addTransaction(e) {
         e.preventDefault();
         
         const nama = document.getElementById('nama').value;
@@ -499,52 +492,39 @@
         // Format tanggal
         const tanggalDisplay = new Date(tanggal).toLocaleDateString('id-ID');
         
-        // Buat form data
-        const formData = new URLSearchParams();
-        formData.append('type', 'transactions');
-        formData.append('method', 'POST');
-        formData.append('tanggal', tanggalDisplay);
-        formData.append('tanggalAsli', tanggal);
-        formData.append('nama', nama);
-        formData.append('jenis', jenis);
-        formData.append('nominal', nominal);
-        formData.append('keterangan', keterangan || '-');
+        // Buat transaksi baru
+        const newTransaction = {
+            id: 't_' + Date.now(),
+            tanggal: tanggalDisplay,
+            tanggalAsli: tanggal,
+            nama: nama,
+            jenis: jenis,
+            nominal: parseInt(nominal),
+            keterangan: keterangan || '-',
+            createdAt: new Date().toISOString()
+        };
         
-        try {
-            const response = await fetch(API_BASE_URL, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: formData.toString()
-            });
-            
-            const result = await response.json();
-            
-            if (result.success) {
-                // Refresh data dari server
-                await loadTransactions();
-                renderTransactions();
-                updateBalance();
-                updateChart();
-                populateYearFilters();
-                
-                // Reset form
-                transactionForm.reset();
-                tanggalInput.value = new Date().toISOString().split('T')[0];
-                
-                showNotification(`Transaksi berhasil disimpan! ✅ ${formatCurrency(parseInt(nominal))}`, 'success');
-            } else {
-                showNotification('Gagal: ' + result.message, 'error');
-            }
-        } catch (error) {
-            console.error('Error:', error);
-            showNotification('Gagal menyimpan transaksi', 'error');
-        }
+        // Tambah ke array
+        transactions.unshift(newTransaction);
+        
+        // Simpan ke localStorage
+        saveAllData();
+        
+        // Update UI
+        renderTransactions();
+        updateBalance();
+        updateChart();
+        populateYearFilters();
+        
+        // Reset form
+        transactionForm.reset();
+        tanggalInput.value = new Date().toISOString().split('T')[0];
+        
+        showNotification(`Transaksi berhasil disimpan! ✅ ${formatCurrency(parseInt(nominal))}`, 'success');
     }
 
     // Fungsi untuk menyimpan catatan
-    async function saveNotes() {
+    function saveNotes() {
         const newNotes = notesInput.value.trim();
         
         if (!newNotes) {
@@ -552,66 +532,28 @@
             return;
         }
         
-        const formData = new URLSearchParams();
-        formData.append('type', 'notes');
-        formData.append('method', 'POST');
-        formData.append('notes', newNotes);
+        notes = newNotes;
+        notesContent.innerHTML = `<p class="mb-0">${notes.replace(/\n/g, '<br>')}</p>`;
         
-        try {
-            const response = await fetch(API_BASE_URL, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: formData.toString()
-            });
-            
-            const result = await response.json();
-            
-            if (result.success) {
-                notes = newNotes;
-                notesContent.innerHTML = `<p class="mb-0">${notes.replace(/\n/g, '<br>')}</p>`;
-                showNotification('Catatan berhasil disimpan! 📝', 'success');
-            } else {
-                throw new Error(result.message);
-            }
-        } catch (error) {
-            showNotification('Gagal menyimpan catatan', 'error');
-        }
+        // Simpan ke localStorage
+        saveAllData();
+        
+        showNotification('Catatan berhasil disimpan! 📝', 'success');
     }
 
     // Fungsi untuk menghapus transaksi
-    async function deleteTransaction(id) {
+    function deleteTransaction(id) {
         if (!confirm('Hapus transaksi ini?')) return;
         
-        const formData = new URLSearchParams();
-        formData.append('type', 'transactions');
-        formData.append('method', 'DELETE');
-        formData.append('id', id);
+        transactions = transactions.filter(t => t.id !== id);
         
-        try {
-            const response = await fetch(API_BASE_URL, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: formData.toString()
-            });
-            
-            const result = await response.json();
-            
-            if (result.success) {
-                transactions = transactions.filter(t => t.id !== id);
-                renderTransactions();
-                updateBalance();
-                updateChart();
-                showNotification('Transaksi dihapus! 🗑️', 'success');
-            } else {
-                throw new Error(result.message);
-            }
-        } catch (error) {
-            showNotification('Gagal menghapus transaksi', 'error');
-        }
+        // Simpan ke localStorage
+        saveAllData();
+        
+        renderTransactions();
+        updateBalance();
+        updateChart();
+        showNotification('Transaksi dihapus! 🗑️', 'success');
     }
 
     // Fungsi untuk merender daftar transaksi
@@ -873,6 +815,7 @@
 </script>
 </body>
 </html>
+
 
 
 
