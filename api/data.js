@@ -1,12 +1,12 @@
-// api/data.js - SIMPLE AND DIRECT VERSION
+// api/data.js - FIXED VERSION
 const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx8gFsR10kWY6tEuD40YaQ_Ja0qSnV8pH7Vw2RhbBKsyve5DFmQP3QZVt-YMZP7LrcT/exec';
 
 export default async function handler(req, res) {
-  // Set CORS headers
+  // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
+  
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
@@ -14,80 +14,85 @@ export default async function handler(req, res) {
   const { type, id } = req.query;
 
   try {
-    console.log('🔄 Processing request:', { method: req.method, type, id });
+    console.log('📱 API Request:', { 
+      method: req.method, 
+      type, 
+      id
+    });
 
-    // Build the URL with query parameters
-    const urlParams = new URLSearchParams();
-    urlParams.append('type', type);
+    let url = GOOGLE_SCRIPT_URL;
+    let options = {
+      redirect: 'follow'
+    };
 
-    // Handle different methods
     if (req.method === 'GET') {
-      // Simple GET request for reading data
-      if (id) urlParams.append('id', id);
+      // GET request - simple URL parameters
+      const params = new URLSearchParams();
+      params.append('type', type);
+      if (id) params.append('id', id);
       
-      const url = `${GOOGLE_SCRIPT_URL}?${urlParams.toString()}`;
+      url += '?' + params.toString();
+      options.method = 'GET';
+      
       console.log('🔗 GET URL:', url);
       
-      const response = await fetch(url, { 
-        method: 'GET',
-        redirect: 'follow'
-      });
-      
-      return handleGoogleResponse(response, res);
-      
     } else if (req.method === 'POST') {
-      // POST request - send data as URL encoded form
-      urlParams.append('method', 'POST');
+      // POST request - send as form data
+      const formData = new URLSearchParams();
+      formData.append('type', type);
+      formData.append('method', 'POST');
       
-      // Add all body data to the form
+      // Add all body data
       if (req.body) {
-        Object.keys(req.body).forEach(key => {
+        for (const key in req.body) {
           if (req.body[key] !== undefined && req.body[key] !== null) {
-            urlParams.append(key, req.body[key].toString());
+            formData.append(key, req.body[key].toString());
           }
-        });
+        }
       }
       
-      const url = GOOGLE_SCRIPT_URL;
-      console.log('📤 POST Data:', urlParams.toString());
+      options.method = 'POST';
+      options.headers = {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      };
+      options.body = formData.toString();
       
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: urlParams.toString(),
-        redirect: 'follow'
-      });
-      
-      return handleGoogleResponse(response, res);
+      console.log('📤 POST Data:', options.body);
       
     } else if (req.method === 'DELETE') {
-      // DELETE request - send as POST with method=DELETE
-      urlParams.append('method', 'DELETE');
-      urlParams.append('id', id);
+      // DELETE request
+      const formData = new URLSearchParams();
+      formData.append('type', type);
+      formData.append('method', 'DELETE');
+      formData.append('id', id);
       
-      const url = GOOGLE_SCRIPT_URL;
-      console.log('🗑️ DELETE Data:', urlParams.toString());
+      options.method = 'POST';
+      options.headers = {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      };
+      options.body = formData.toString();
       
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: urlParams.toString(),
-        redirect: 'follow'
-      });
-      
-      return handleGoogleResponse(response, res);
+      console.log('🗑️ DELETE Data:', options.body);
     }
 
-    return res.status(405).json({ success: false, message: 'Method not allowed' });
+    const response = await fetch(url, options);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const text = await response.text();
+    console.log('📄 Response:', text);
+    
+    const result = JSON.parse(text);
+    console.log('✅ Parsed result:', result.success ? 'SUCCESS' : 'FAILED');
+    
+    return res.status(200).json(result);
 
   } catch (error) {
-    console.error('❌ Error in data.js:', error.message);
+    console.error('❌ API Error:', error.message);
     
-    // Return fallback data for GET requests
+    // Fallback untuk development
     if (req.method === 'GET') {
       if (type === 'transactions') {
         return res.status(200).json({ success: true, data: [] });
@@ -102,33 +107,8 @@ export default async function handler(req, res) {
     
     return res.status(500).json({ 
       success: false, 
-      message: 'Internal server error',
+      message: 'Gagal terhubung ke server',
       error: error.message 
-    });
-  }
-}
-
-// Helper function to handle Google Apps Script response
-async function handleGoogleResponse(response, res) {
-  try {
-    const text = await response.text();
-    console.log('📄 Raw response:', text);
-    
-    // Parse JSON response
-    const data = JSON.parse(text);
-    console.log('✅ Parsed response:', { 
-      success: data.success, 
-      message: data.message,
-      dataLength: data.data ? (Array.isArray(data.data) ? data.data.length : 1) : 0
-    });
-    
-    return res.status(200).json(data);
-  } catch (parseError) {
-    console.error('❌ Parse error:', parseError.message);
-    return res.status(500).json({ 
-      success: false, 
-      message: 'Invalid response from server',
-      error: parseError.message 
     });
   }
 }
