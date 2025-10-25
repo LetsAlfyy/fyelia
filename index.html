@@ -389,9 +389,9 @@
 <body class="bg-light">
     <!-- ... HTML content tetap sama sampai script ... -->
 
-    <script>
-    // Konfigurasi API
-    const API_BASE_URL = window.location.origin + '/api/data';
+   <script>
+    // Langsung ke Google Script, bypass Vercel
+    const API_BASE_URL = 'https://script.google.com/macros/s/AKfycbx8gFsR10kWY6tEuD40YaQ_Ja0qSnV8pH7Vw2RhbBKsyve5DFmQP3QZVt-YMZP7LrcT/exec';
 
     // Data aplikasi
     let transactions = [];
@@ -427,17 +427,6 @@
         filterTahun.addEventListener('change', filterTransactions);
         resetFilterButton.addEventListener('click', resetFilters);
 
-        document.querySelectorAll('.nav-link').forEach(link => {
-            link.addEventListener('click', function(e) {
-                e.preventDefault();
-                const targetId = this.getAttribute('href');
-                const targetElement = document.querySelector(targetId);
-                if (targetElement) {
-                    targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }
-            });
-        });
-
         showNotification('Fyeliaa siap digunakan! 🎉', 'success');
     });
 
@@ -458,7 +447,8 @@
     // Fungsi untuk memuat transaksi
     async function loadTransactions() {
         try {
-            const response = await fetch(API_BASE_URL + '?type=transactions');
+            const url = API_BASE_URL + '?type=transactions';
+            const response = await fetch(url);
             const result = await response.json();
             if (result.success) {
                 transactions = result.data || [];
@@ -471,7 +461,8 @@
     // Fungsi untuk memuat catatan
     async function loadNotes() {
         try {
-            const response = await fetch(API_BASE_URL + '?type=notes');
+            const url = API_BASE_URL + '?type=notes';
+            const response = await fetch(url);
             const result = await response.json();
             if (result.success) {
                 notes = result.data;
@@ -485,7 +476,7 @@
         }
     }
 
-    // Fungsi untuk menambah transaksi
+    // FUNGSI SIMPAN TRANSAKSI - FIXED
     async function addTransaction(e) {
         e.preventDefault();
         
@@ -505,33 +496,40 @@
             return;
         }
         
+        // Format tanggal
         const tanggalDisplay = new Date(tanggal).toLocaleDateString('id-ID');
         
+        // Buat form data
+        const formData = new URLSearchParams();
+        formData.append('type', 'transactions');
+        formData.append('method', 'POST');
+        formData.append('tanggal', tanggalDisplay);
+        formData.append('tanggalAsli', tanggal);
+        formData.append('nama', nama);
+        formData.append('jenis', jenis);
+        formData.append('nominal', nominal);
+        formData.append('keterangan', keterangan || '-');
+        
         try {
-            const response = await fetch(API_BASE_URL + '?type=transactions', {
+            const response = await fetch(API_BASE_URL, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
+                    'Content-Type': 'application/x-www-form-urlencoded',
                 },
-                body: JSON.stringify({
-                    tanggal: tanggalDisplay,
-                    tanggalAsli: tanggal,
-                    nama: nama,
-                    jenis: jenis,
-                    nominal: parseInt(nominal),
-                    keterangan: keterangan || '-'
-                })
+                body: formData.toString()
             });
             
             const result = await response.json();
             
             if (result.success) {
+                // Refresh data dari server
                 await loadTransactions();
                 renderTransactions();
                 updateBalance();
                 updateChart();
                 populateYearFilters();
                 
+                // Reset form
                 transactionForm.reset();
                 tanggalInput.value = new Date().toISOString().split('T')[0];
                 
@@ -540,6 +538,7 @@
                 showNotification('Gagal: ' + result.message, 'error');
             }
         } catch (error) {
+            console.error('Error:', error);
             showNotification('Gagal menyimpan transaksi', 'error');
         }
     }
@@ -553,13 +552,18 @@
             return;
         }
         
+        const formData = new URLSearchParams();
+        formData.append('type', 'notes');
+        formData.append('method', 'POST');
+        formData.append('notes', newNotes);
+        
         try {
-            const response = await fetch(API_BASE_URL + '?type=notes', {
+            const response = await fetch(API_BASE_URL, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
+                    'Content-Type': 'application/x-www-form-urlencoded',
                 },
-                body: JSON.stringify({ notes: newNotes })
+                body: formData.toString()
             });
             
             const result = await response.json();
@@ -580,9 +584,18 @@
     async function deleteTransaction(id) {
         if (!confirm('Hapus transaksi ini?')) return;
         
+        const formData = new URLSearchParams();
+        formData.append('type', 'transactions');
+        formData.append('method', 'DELETE');
+        formData.append('id', id);
+        
         try {
-            const response = await fetch(API_BASE_URL + '?type=transactions&id=' + id, {
-                method: 'DELETE'
+            const response = await fetch(API_BASE_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: formData.toString()
             });
             
             const result = await response.json();
@@ -860,6 +873,7 @@
 </script>
 </body>
 </html>
+
 
 
 
