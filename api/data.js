@@ -1,5 +1,5 @@
 // api/data.js - WORKAROUND: Use GET with encoded data
-const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxzk-86sVOXV9ZJf1ihV15pe0YHEvxmq9yQE00ZO762KM6DwotMTDL84uPh1h-19hB1/exec';
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx8gFsR10kWY6tEuD40YaQ_Ja0qSnV8pH7Vw2RhbBKsyve5DFmQP3QZVt-YMZP7LrcT/exec';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -103,3 +103,4 @@ export default async function handler(req, res) {
     });
   }
 }
+
