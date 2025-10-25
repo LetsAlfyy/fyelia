@@ -1,14 +1,11 @@
-// api/data.js
-// GANTI URL INI DENGAN URL DEPLOYMENT BARU YANG SUDAH BERHASIL RETURN JSON!
+// api/data.js - WORKAROUND: Use GET with encoded data
 const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxzk-86sVOXV9ZJf1ihV15pe0YHEvxmq9yQE00ZO762KM6DwotMTDL84uPh1h-19hB1/exec';
 
 export default async function handler(req, res) {
-  // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   
-  // Handle preflight
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
@@ -16,87 +13,83 @@ export default async function handler(req, res) {
   const { type, id } = req.query;
 
   try {
-    console.log('📱 Vercel API called:', { 
-      method: req.method, 
-      type, 
-      id 
-    });
+    console.log('📱 Request:', { method: req.method, type, id });
 
-    // Build Google Apps Script URL
     let url = `${GOOGLE_SCRIPT_URL}?type=${type}`;
-    
+    let fetchMethod = 'GET';
+
+    // DELETE: send as GET with method parameter
     if (req.method === 'DELETE') {
-      url += `&method=DELETE`;
+      url += `&method=DELETE&id=${encodeURIComponent(id)}`;
     }
-    
-    if (id) {
+    // POST: encode data in URL as workaround
+    else if (req.method === 'POST' && req.body) {
+      url += `&method=POST`;
+      // Encode each field as URL parameter
+      const body = req.body;
+      if (body.tanggal) url += `&tanggal=${encodeURIComponent(body.tanggal)}`;
+      if (body.tanggalAsli) url += `&tanggalAsli=${encodeURIComponent(body.tanggalAsli)}`;
+      if (body.nama) url += `&nama=${encodeURIComponent(body.nama)}`;
+      if (body.jenis) url += `&jenis=${encodeURIComponent(body.jenis)}`;
+      if (body.nominal) url += `&nominal=${encodeURIComponent(body.nominal)}`;
+      if (body.keterangan) url += `&keterangan=${encodeURIComponent(body.keterangan)}`;
+      if (body.notes) url += `&notes=${encodeURIComponent(body.notes)}`;
+      
+      console.log('📤 POST data encoded in URL');
+    }
+    // GET with id
+    else if (id) {
       url += `&id=${encodeURIComponent(id)}`;
     }
 
-    console.log('🔗 Calling:', url);
+    console.log('🔗 URL:', url.substring(0, 150) + '...');
 
-    // Prepare fetch options
-    const options = {
-      method: req.method === 'DELETE' ? 'GET' : req.method,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      redirect: 'follow'
-    };
-
-    // Add body for POST
-    if (req.method === 'POST' && req.body) {
-      options.body = JSON.stringify(req.body);
-      console.log('📤 Body:', options.body);
-    }
-
-    // Fetch with timeout
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 20000);
-    options.signal = controller.signal;
 
-    const response = await fetch(url, options);
+    const response = await fetch(url, {
+      method: fetchMethod,
+      headers: { 'Content-Type': 'text/plain' },
+      redirect: 'follow',
+      signal: controller.signal
+    });
+
     clearTimeout(timeoutId);
 
-    // Get response text first
     const text = await response.text();
-    console.log('📥 Response (first 200 chars):', text.substring(0, 200));
+    console.log('📥 Response length:', text.length);
+    console.log('📥 First 200 chars:', text.substring(0, 200));
 
-    // Try to parse as JSON
     let result;
     try {
       result = JSON.parse(text);
+      console.log('✅ JSON parsed successfully');
     } catch (parseError) {
-      console.error('❌ JSON Parse Error:', parseError.message);
+      console.error('❌ JSON parse error:', parseError.message);
       console.error('Response text:', text);
-      throw new Error('Invalid JSON from Google Sheets: ' + text.substring(0, 100));
+      throw new Error('Invalid JSON: ' + text.substring(0, 100));
     }
 
-    console.log('✅ Parsed result:', { 
+    console.log('✅ Result:', { 
       success: result.success,
-      dataType: Array.isArray(result.data) ? 'array' : typeof result.data,
-      dataLength: Array.isArray(result.data) ? result.data.length : '-'
+      message: result.message,
+      dataLength: result.data ? (Array.isArray(result.data) ? result.data.length : 'string') : 0
     });
 
     return res.status(200).json(result);
 
   } catch (error) {
-    console.error('❌ Vercel API Error:', {
+    console.error('❌ API Error:', {
       name: error.name,
-      message: error.message,
-      type,
-      method: req.method
+      message: error.message
     });
 
-    // Fallback for GET requests
+    // Fallback for GET
     if (req.method === 'GET') {
       if (type === 'transactions') {
-        console.log('🔄 Fallback: empty transactions');
         return res.status(200).json({ success: true, data: [] });
       }
-      
       if (type === 'notes') {
-        console.log('🔄 Fallback: default notes');
         return res.status(200).json({ 
           success: true, 
           data: "Selamat datang di Fyeliaa! 💰" 
@@ -104,12 +97,9 @@ export default async function handler(req, res) {
       }
     }
 
-    // Error response
     return res.status(500).json({
       success: false,
-      message: error.name === 'AbortError' 
-        ? 'Request timeout' 
-        : 'Gagal terhubung ke server: ' + error.message
+      message: 'Gagal terhubung ke server: ' + error.message
     });
   }
 }
