@@ -387,11 +387,10 @@
     <!-- ... head content tetap sama ... -->
 </head>
 <body class="bg-light">
-    <!-- ... HTML content tetap sama sampai script ... -->
-
-   <script>
-    // SIMPLE VERSION - PAKE LOCALSTORAGE
+    <script>
+    // HYBRID SYSTEM - localStorage + Google Sheets Backup
     const STORAGE_KEY = 'fyeliaa_data';
+    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx8gFsR10kWY6tEuD40YaQ_Ja0qSnV8pH7Vw2RhbBKsyve5DFmQP3QZVt-YMZP7LrcT/exec';
 
     // Data aplikasi
     let transactions = [];
@@ -415,9 +414,11 @@
     const tanggalInput = document.getElementById('tanggal');
 
     // Inisialisasi
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', async function() {
+        console.log('🚀 Fyeliaa Starting...');
         tanggalInput.value = new Date().toISOString().split('T')[0];
-        loadAllData();
+        
+        await loadAllData();
         
         transactionForm.addEventListener('submit', addTransaction);
         saveNotesButton.addEventListener('click', saveNotes);
@@ -430,130 +431,149 @@
         showNotification('Fyeliaa siap digunakan! 🎉', 'success');
     });
 
-    // Fungsi untuk memuat semua data dari localStorage
-        function loadAllData() {
-    try {
-        const savedData = localStorage.getItem(STORAGE_KEY);
-        
-        if (savedData) {
-            // Pakai data lokal
-            const data = JSON.parse(savedData);
-            transactions = data.transactions || [];
-            notes = data.notes || '';
-            console.log('📂 Loaded from localStorage');
-        } else {
-            // Coba load dari backup Google Sheets
-            await loadFromBackup();
+    // Fungsi untuk memuat semua data
+    async function loadAllData() {
+        try {
+            console.log('📂 Loading data...');
             
-            if (transactions.length === 0) {
-                // Data default
-                transactions = [];
-                notes = "Selamat datang di Fyeliaa! 💰\nCatat semua transaksi keuangan Alfye & Aulia di sini.";
+            // Coba load dari localStorage dulu
+            const savedData = localStorage.getItem(STORAGE_KEY);
+            
+            if (savedData) {
+                // Pakai data lokal
+                const data = JSON.parse(savedData);
+                transactions = data.transactions || [];
+                notes = data.notes || '';
+                console.log('✅ Loaded from localStorage:', transactions.length, 'transactions');
+            } else {
+                // Coba load dari Google Sheets backup
+                console.log('🔄 No local data, trying Google Sheets backup...');
+                await loadFromBackup();
+                
+                if (transactions.length === 0) {
+                    // Data default
+                    transactions = [];
+                    notes = "Selamat datang di Fyeliaa! 💰\nCatat semua transaksi keuangan Alfye & Aulia di sini.";
+                    console.log('📝 Using default data');
+                }
             }
+            
+            // Update UI
+            notesContent.innerHTML = notes ? `<p class="mb-0">${notes.replace(/\n/g, '<br>')}</p>` : 'Belum ada catatan.';
+            notesInput.value = notes;
+            
+            renderTransactions();
+            updateBalance();
+            initChart();
+            populateYearFilters();
+            
+        } catch (error) {
+            console.error('❌ Error loading data:', error);
+            showNotification('Gagal memuat data', 'error');
         }
-        
-        // Update UI...
-        
-    } catch (error) {
-        console.error('Error loading data:', error);
     }
-}
-        // Fungsi untuk menyimpan data ke localStorage DAN Google Sheets
-    function saveAllData() {
+
+    // Load dari Google Sheets backup
+    async function loadFromBackup() {
+        try {
+            console.log('🔗 Connecting to Google Sheets...');
+            const response = await fetch(GOOGLE_SCRIPT_URL + '?type=restore');
+            
+            if (!response.ok) throw new Error('Network error');
+            
+            const result = await response.json();
+            console.log('📄 Backup response:', result);
+            
+            if (result.success && result.data) {
+                const backupData = JSON.parse(result.data);
+                transactions = backupData.transactions || [];
+                notes = backupData.notes || '';
+                
+                // Simpan ke localStorage juga
+                saveToLocalStorage();
+                
+                console.log('✅ Loaded from Google Sheets:', transactions.length, 'transactions');
+                showNotification('Data dipulihkan dari backup! 🔄', 'success');
+            } else {
+                console.log('ℹ️ No backup data found');
+            }
+        } catch (error) {
+            console.log('⚠️ Cannot load backup:', error.message);
+        }
+    }
+
+    // Simpan ke localStorage
+    function saveToLocalStorage() {
+        try {
+            const data = {
+                transactions: transactions,
+                notes: notes
+            };
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        } catch (error) {
+            console.error('Error saving to localStorage:', error);
+        }
+    }
+
+    // Backup ke Google Sheets
+    async function backupToGoogleSheets() {
         try {
             const data = {
                 transactions: transactions,
                 notes: notes
             };
             
-        // 1. Simpan ke localStorage (utama)
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-        console.log('💾 Saved to localStorage');
-        
-        // 2. Backup ke Google Sheets (background)
-        backupToGoogleSheets(data);
-        
-    } catch (error) {
-        console.error('Error saving data:', error);
-    }
-}
-
-// Backup ke Google Sheets
-async function backupToGoogleSheets(data) {
-    try {
-        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx8gFsR10kWY6tEuD40YaQ_Ja0qSnV8pH7Vw2RhbBKsyve5DFmQP3QZVt-YMZP7LrcT/exec';
-        
-        const formData = new URLSearchParams();
-        formData.append('type', 'backup');
-        formData.append('data', JSON.stringify(data));
-        
-        // Kirim dalam background, tidak perlu tunggu response
-        fetch(GOOGLE_SCRIPT_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: formData.toString()
-        }).then(() => {
-            console.log('✅ Backup to Google Sheets success');
-        }).catch(error => {
-            console.log('⚠️ Backup failed (offline mode)');
-        });
-        
-    } catch (error) {
-        console.log('⚠️ Backup error (non-critical)');
-    }
-}
-
-// Load data dari Google Sheets saat pertama kali buka
-async function loadFromBackup() {
-    try {
-        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx8gFsR10kWY6tEuD40YaQ_Ja0qSnV8pH7Vw2RhbBKsyve5DFmQP3QZVt-YMZP7LrcT/exec';
-        
-        const response = await fetch(GOOGLE_SCRIPT_URL + '?type=restore');
-        const result = await response.json();
-        
-        if (result.success && result.data) {
-            const backupData = JSON.parse(result.data);
-            transactions = backupData.transactions || [];
-            notes = backupData.notes || '';
-            console.log('✅ Loaded from Google Sheets backup');
+            const formData = new URLSearchParams();
+            formData.append('type', 'backup');
+            formData.append('data', JSON.stringify(data));
+            
+            console.log('💾 Backing up to Google Sheets...');
+            
+            // Kirim backup (tidak perlu tunggu response)
+            fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: formData.toString()
+            }).then(response => response.json())
+              .then(result => {
+                  if (result.success) {
+                      console.log('✅ Backup to Google Sheets success');
+                  } else {
+                      console.log('⚠️ Backup failed:', result.message);
+                  }
+              }).catch(error => {
+                  console.log('🌐 Backup offline (non-critical)');
+              });
+            
+        } catch (error) {
+            console.log('⚠️ Backup error (non-critical)');
         }
-    } catch (error) {
-        console.log('⚠️ Cannot load backup (using local data)');
     }
-}
 
-    // Fungsi untuk menambah transaksi - DEBUG VERSION
-function addTransaction(e) {
-    e.preventDefault();
-    
-    console.log('🔴 Mulai addTransaction');
-    
-    const nama = document.getElementById('nama').value;
-    const jenis = document.getElementById('jenis').value;
-    const nominal = document.getElementById('nominal').value;
-    const keterangan = document.getElementById('keterangan').value;
-    const tanggal = document.getElementById('tanggal').value;
-    
-    console.log('📝 Form values:', { nama, jenis, nominal, keterangan, tanggal });
-    
-    if (!nama || !jenis || !nominal || !tanggal) {
-        console.log('❌ Field tidak lengkap');
-        showNotification('Harap isi semua field!', 'warning');
-        return;
-    }
-    
-    if (parseInt(nominal) <= 0) {
-        console.log('❌ Nominal invalid');
-        showNotification('Nominal harus lebih dari 0!', 'warning');
-        return;
-    }
-    
-    try {
+    // FUNGSI SIMPAN TRANSAKSI
+    function addTransaction(e) {
+        e.preventDefault();
+        
+        const nama = document.getElementById('nama').value;
+        const jenis = document.getElementById('jenis').value;
+        const nominal = document.getElementById('nominal').value;
+        const keterangan = document.getElementById('keterangan').value;
+        const tanggal = document.getElementById('tanggal').value;
+        
+        if (!nama || !jenis || !nominal || !tanggal) {
+            showNotification('Harap isi semua field!', 'warning');
+            return;
+        }
+        
+        if (parseInt(nominal) <= 0) {
+            showNotification('Nominal harus lebih dari 0!', 'warning');
+            return;
+        }
+        
         // Format tanggal
         const tanggalDisplay = new Date(tanggal).toLocaleDateString('id-ID');
-        console.log('📅 Tanggal display:', tanggalDisplay);
         
         // Buat transaksi baru
         const newTransaction = {
@@ -567,42 +587,25 @@ function addTransaction(e) {
             createdAt: new Date().toISOString()
         };
         
-        console.log('💾 New transaction:', newTransaction);
-        
         // Tambah ke array
         transactions.unshift(newTransaction);
-        console.log('✅ Transaction added to array');
         
-        // Simpan ke localStorage
-        saveAllData();
-        console.log('💾 Data saved to localStorage');
+        // SIMPAN: localStorage + backup ke Google Sheets
+        saveToLocalStorage();
+        backupToGoogleSheets();
         
         // Update UI
         renderTransactions();
-        console.log('🔄 UI rendered');
-        
         updateBalance();
-        console.log('💰 Balance updated');
-        
         updateChart();
-        console.log('📊 Chart updated');
-        
         populateYearFilters();
-        console.log('📅 Year filters populated');
         
         // Reset form
         transactionForm.reset();
         tanggalInput.value = new Date().toISOString().split('T')[0];
-        console.log('🔄 Form reset');
         
         showNotification(`Transaksi berhasil disimpan! ✅ ${formatCurrency(parseInt(nominal))}`, 'success');
-        console.log('🎉 Notification shown');
-        
-    } catch (error) {
-        console.error('❌ Error in addTransaction:', error);
-        showNotification('Error: ' + error.message, 'error');
     }
-}
 
     // Fungsi untuk menyimpan catatan
     function saveNotes() {
@@ -616,8 +619,9 @@ function addTransaction(e) {
         notes = newNotes;
         notesContent.innerHTML = `<p class="mb-0">${notes.replace(/\n/g, '<br>')}</p>`;
         
-        // Simpan ke localStorage
-        saveAllData();
+        // SIMPAN: localStorage + backup ke Google Sheets
+        saveToLocalStorage();
+        backupToGoogleSheets();
         
         showNotification('Catatan berhasil disimpan! 📝', 'success');
     }
@@ -628,14 +632,17 @@ function addTransaction(e) {
         
         transactions = transactions.filter(t => t.id !== id);
         
-        // Simpan ke localStorage
-        saveAllData();
+        // SIMPAN: localStorage + backup ke Google Sheets
+        saveToLocalStorage();
+        backupToGoogleSheets();
         
         renderTransactions();
         updateBalance();
         updateChart();
         showNotification('Transaksi dihapus! 🗑️', 'success');
     }
+
+    // ... (fungsi renderTransactions, updateBalance, filterTransactions, resetFilters, populateYearFilters, initChart, updateChart TETAP SAMA seperti sebelumnya)
 
     // Fungsi untuk merender daftar transaksi
     function renderTransactions(filteredTransactions = null) {
@@ -896,6 +903,7 @@ function addTransaction(e) {
 </script>
 </body>
 </html>
+
 
 
 
