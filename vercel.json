@@ -2,7 +2,7 @@
   "version": 2,
   "builds": [
     {
-      "src": "data.js",
+      "src": "api/data.js",
       "use": "@vercel/node"
     },
     {
@@ -14,7 +14,7 @@
     {
       "src": "/api/data",
       "methods": ["GET", "POST", "DELETE", "OPTIONS"],
-      "dest": "/data.js"
+      "dest": "/api/data.js"
     },
     {
       "src": "/(.*)",
