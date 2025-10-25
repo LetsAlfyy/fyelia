@@ -537,8 +537,7 @@
             }
         }
 
-        // Fungsi untuk menambah transaksi
-        // Fungsi untuk menambah transaksi - FIXED
+        // Temporary fallback di index.html
 async function addTransaction(e) {
     e.preventDefault();
     
@@ -547,8 +546,6 @@ async function addTransaction(e) {
     const nominal = parseInt(document.getElementById('nominal').value);
     const keterangan = document.getElementById('keterangan').value;
     const tanggal = document.getElementById('tanggal').value;
-    
-    console.log('📝 Form data:', { nama, jenis, nominal, keterangan, tanggal });
     
     if (!nama || !jenis || !nominal || !tanggal) {
         showNotification('Harap isi semua field!', 'warning');
@@ -560,57 +557,52 @@ async function addTransaction(e) {
         return;
     }
     
-    const transactionData = {
+    const transaction = {
+        id: 'local-' + Date.now(),
         tanggal: formatDateForDisplay(tanggal),
         tanggalAsli: tanggal,
         nama,
         jenis,
         nominal,
-        keterangan: keterangan || '-'
+        keterangan: keterangan || '-',
+        createdAt: new Date().toISOString()
     };
     
     try {
-        console.log('🚀 Saving transaction...');
-        
+        // Coba simpan ke server dulu
         const response = await fetch(API_BASE_URL + '?type=transactions', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(transactionData)
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(transaction)
         });
         
         const result = await response.json();
-        console.log('💾 Save response:', result);
         
         if (result.success) {
-            // Tambahkan ke array lokal
-            if (result.data && result.data.id) {
-                transactions.unshift(result.data);
-            } else {
-                // Fallback: tambahkan dengan ID sementara
-                transactionData.id = 'temp-' + Date.now();
-                transactions.unshift(transactionData);
-            }
-            
-            // Update UI
-            renderTransactions();
-            updateBalance();
-            updateChart();
-            populateYearFilters();
-            
-            // Reset form
-            transactionForm.reset();
-            tanggalInput.value = new Date().toISOString().split('T')[0];
-            
+            // Success - use server data
+            transactions.unshift(result.data);
             showNotification(`Transaksi berhasil disimpan! ✅ ${formatCurrency(nominal)}`, 'success');
         } else {
-            throw new Error(result.message || 'Gagal menyimpan transaksi');
+            // Server error - use local data
+            transactions.unshift(transaction);
+            showNotification(`Transaksi disimpan secara lokal ⚠️ ${formatCurrency(nominal)}`, 'warning');
         }
+        
     } catch (error) {
-        console.error('❌ Save error:', error);
-        showNotification('Gagal menyimpan transaksi: ' + error.message, 'error');
+        // Network error - use local data
+        transactions.unshift(transaction);
+        showNotification(`Transaksi disimpan secara lokal ⚠️ ${formatCurrency(nominal)}`, 'warning');
     }
+    
+    // Update UI
+    renderTransactions();
+    updateBalance();
+    updateChart();
+    populateYearFilters();
+    
+    // Reset form
+    transactionForm.reset();
+    tanggalInput.value = new Date().toISOString().split('T')[0];
 }
 
         // Fungsi untuk menyimpan catatan
@@ -943,6 +935,7 @@ async function addTransaction(e) {
     </script>
 </body>
 </html>
+
 
 
 
