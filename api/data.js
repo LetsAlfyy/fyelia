@@ -1,5 +1,5 @@
 // api/data.js - FIXED VERSION
-const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzzbkvEBnYpoM_yFtNgFcTlLaFiRk7UAsI2Qsy3DLZMEfPx2pr_Q0qVjM4jvwvihKRDkw/exec';
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx8gFsR10kWY6tEuD40YaQ_Ja0qSnV8pH7Vw2RhbBKsyve5DFmQP3QZVt-YMZP7LrcT/exec';
 
 export default async function handler(req, res) {
   // CORS headers
@@ -26,6 +26,7 @@ export default async function handler(req, res) {
     const params = new URLSearchParams();
     params.append('type', type);
     
+    // Untuk DELETE request, gunakan parameter method
     if (req.method === 'DELETE') {
       params.append('method', 'DELETE');
     }
@@ -49,7 +50,9 @@ export default async function handler(req, res) {
     if (req.method === 'POST' && req.body) {
       const formData = new URLSearchParams();
       for (const key in req.body) {
-        formData.append(key, req.body[key]);
+        if (req.body[key] !== undefined && req.body[key] !== null) {
+          formData.append(key, req.body[key]);
+        }
       }
       options.body = formData.toString();
       console.log('📤 Sending form data:', options.body);
