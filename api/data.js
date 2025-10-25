@@ -26,21 +26,55 @@ export default async function handler(req, res) {
     const params = new URLSearchParams();
     params.append('type', type);
     
+    // Handle different HTTP methods
     if (req.method === 'DELETE') {
       params.append('method', 'DELETE');
-    }
-    
-    if (id) {
-      params.append('id', id);
+      if (id) params.append('id', id);
+    } else if (req.method === 'POST') {
+      params.append('method', 'POST');
     }
 
-    url += '?' + params.toString();
-    console.log('🔗 Calling Google Sheets:', url);
+    // Untuk GET requests (membaca data), tambahkan parameter ke URL
+    if (req.method === 'GET') {
+      if (id) {
+        params.append('id', id);
+      }
+      url += '?' + params.toString();
+    }
 
     const options = {
-      method: 'GET', // Gunakan GET untuk semua request ke Google Apps Script
+      method: req.method === 'GET' ? 'GET' : 'POST',
       redirect: 'follow'
     };
+
+    // Untuk POST requests, kirim data sebagai form data
+    if (req.method === 'POST' && req.body) {
+      const formData = new URLSearchParams();
+      
+      // Tambahkan semua field dari body ke formData
+      for (const key in req.body) {
+        if (req.body[key] !== undefined && req.body[key] !== null) {
+          formData.append(key, req.body[key].toString());
+        }
+      }
+      
+      // Juga tambahkan parameter type dan method
+      formData.append('type', type);
+      formData.append('method', 'POST');
+      
+      options.headers = {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      };
+      options.body = formData.toString();
+      
+      console.log('📤 Sending POST data:', options.body);
+    } else {
+      // Untuk GET dan DELETE, gunakan URL parameters
+      url += '?' + params.toString();
+    }
+
+    console.log('🔗 Calling Google Sheets:', url);
+    console.log('⚙️ Request options:', options);
 
     // Timeout setelah 15 detik
     const controller = new AbortController();
@@ -66,6 +100,7 @@ export default async function handler(req, res) {
 
     console.log('✅ Google Sheets response:', { 
       success: result.success,
+      message: result.message,
       dataLength: result.data ? (Array.isArray(result.data) ? result.data.length : 'string') : 0
     });
 
@@ -79,21 +114,23 @@ export default async function handler(req, res) {
       method: req.method
     });
 
-    // Fallback data untuk development
-    if (type === 'transactions') {
-      console.log('🔄 Using fallback: empty transactions');
-      return res.status(200).json({
-        success: true,
-        data: []
-      });
-    }
+    // Fallback untuk GET requests
+    if (req.method === 'GET') {
+      if (type === 'transactions') {
+        console.log('🔄 Using fallback: empty transactions');
+        return res.status(200).json({
+          success: true,
+          data: []
+        });
+      }
 
-    if (type === 'notes') {
-      console.log('🔄 Using fallback: default notes');
-      return res.status(200).json({
-        success: true,
-        data: "Selamat datang di Fyeliaa! 💰\nCatat semua transaksi keuangan Alfye & Aulia di sini.\n\n📝 Catatan:\n- Gaji bulanan: Rp 5.000.000\n- Tabungan tujuan: Liburan akhir tahun\n- Target: Rp 10.000.000"
-      });
+      if (type === 'notes') {
+        console.log('🔄 Using fallback: default notes');
+        return res.status(200).json({
+          success: true,
+          data: "Selamat datang di Fyeliaa! 💰\nCatat semua transaksi keuangan Alfye & Aulia di sini."
+        });
+      }
     }
 
     // Error response
