@@ -469,28 +469,36 @@
         }
     }
 
-    // FUNGSI SIMPAN TRANSAKSI - SIMPLE
-    function addTransaction(e) {
-        e.preventDefault();
-        
-        const nama = document.getElementById('nama').value;
-        const jenis = document.getElementById('jenis').value;
-        const nominal = document.getElementById('nominal').value;
-        const keterangan = document.getElementById('keterangan').value;
-        const tanggal = document.getElementById('tanggal').value;
-        
-        if (!nama || !jenis || !nominal || !tanggal) {
-            showNotification('Harap isi semua field!', 'warning');
-            return;
-        }
-        
-        if (parseInt(nominal) <= 0) {
-            showNotification('Nominal harus lebih dari 0!', 'warning');
-            return;
-        }
-        
+    // Fungsi untuk menambah transaksi - DEBUG VERSION
+function addTransaction(e) {
+    e.preventDefault();
+    
+    console.log('🔴 Mulai addTransaction');
+    
+    const nama = document.getElementById('nama').value;
+    const jenis = document.getElementById('jenis').value;
+    const nominal = document.getElementById('nominal').value;
+    const keterangan = document.getElementById('keterangan').value;
+    const tanggal = document.getElementById('tanggal').value;
+    
+    console.log('📝 Form values:', { nama, jenis, nominal, keterangan, tanggal });
+    
+    if (!nama || !jenis || !nominal || !tanggal) {
+        console.log('❌ Field tidak lengkap');
+        showNotification('Harap isi semua field!', 'warning');
+        return;
+    }
+    
+    if (parseInt(nominal) <= 0) {
+        console.log('❌ Nominal invalid');
+        showNotification('Nominal harus lebih dari 0!', 'warning');
+        return;
+    }
+    
+    try {
         // Format tanggal
         const tanggalDisplay = new Date(tanggal).toLocaleDateString('id-ID');
+        console.log('📅 Tanggal display:', tanggalDisplay);
         
         // Buat transaksi baru
         const newTransaction = {
@@ -504,24 +512,42 @@
             createdAt: new Date().toISOString()
         };
         
+        console.log('💾 New transaction:', newTransaction);
+        
         // Tambah ke array
         transactions.unshift(newTransaction);
+        console.log('✅ Transaction added to array');
         
         // Simpan ke localStorage
         saveAllData();
+        console.log('💾 Data saved to localStorage');
         
         // Update UI
         renderTransactions();
+        console.log('🔄 UI rendered');
+        
         updateBalance();
+        console.log('💰 Balance updated');
+        
         updateChart();
+        console.log('📊 Chart updated');
+        
         populateYearFilters();
+        console.log('📅 Year filters populated');
         
         // Reset form
         transactionForm.reset();
         tanggalInput.value = new Date().toISOString().split('T')[0];
+        console.log('🔄 Form reset');
         
         showNotification(`Transaksi berhasil disimpan! ✅ ${formatCurrency(parseInt(nominal))}`, 'success');
+        console.log('🎉 Notification shown');
+        
+    } catch (error) {
+        console.error('❌ Error in addTransaction:', error);
+        showNotification('Error: ' + error.message, 'error');
     }
+}
 
     // Fungsi untuk menyimpan catatan
     function saveNotes() {
@@ -815,6 +841,7 @@
 </script>
 </body>
 </html>
+
 
 
 
