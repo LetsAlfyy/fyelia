@@ -26,26 +26,19 @@ export default async function handler(req, res) {
     const params = new URLSearchParams();
     params.append('type', type);
     
-    // Handle different methods
     if (req.method === 'DELETE') {
       params.append('method', 'DELETE');
-      if (id) params.append('id', id);
     }
     
-    // Untuk POST requests, tambahkan data ke parameters
-    if (req.method === 'POST' && req.body) {
-      for (const key in req.body) {
-        if (req.body[key] !== undefined && req.body[key] !== null) {
-          params.append(key, req.body[key]);
-        }
-      }
+    if (id) {
+      params.append('id', id);
     }
 
     url += '?' + params.toString();
     console.log('🔗 Calling Google Sheets:', url);
 
     const options = {
-      method: 'POST', // Selalu gunakan POST untuk Google Apps Script
+      method: 'GET', // Gunakan GET untuk semua request ke Google Apps Script
       redirect: 'follow'
     };
 
@@ -73,7 +66,6 @@ export default async function handler(req, res) {
 
     console.log('✅ Google Sheets response:', { 
       success: result.success,
-      message: result.message,
       dataLength: result.data ? (Array.isArray(result.data) ? result.data.length : 'string') : 0
     });
 
@@ -87,23 +79,21 @@ export default async function handler(req, res) {
       method: req.method
     });
 
-    // Fallback untuk GET requests
-    if (req.method === 'GET') {
-      if (type === 'transactions') {
-        console.log('🔄 Using fallback: empty transactions');
-        return res.status(200).json({
-          success: true,
-          data: []
-        });
-      }
+    // Fallback data untuk development
+    if (type === 'transactions') {
+      console.log('🔄 Using fallback: empty transactions');
+      return res.status(200).json({
+        success: true,
+        data: []
+      });
+    }
 
-      if (type === 'notes') {
-        console.log('🔄 Using fallback: default notes');
-        return res.status(200).json({
-          success: true,
-          data: "Selamat datang di Fyeliaa! 💰\nCatat semua transaksi keuangan Alfye & Aulia di sini."
-        });
-      }
+    if (type === 'notes') {
+      console.log('🔄 Using fallback: default notes');
+      return res.status(200).json({
+        success: true,
+        data: "Selamat datang di Fyeliaa! 💰\nCatat semua transaksi keuangan Alfye & Aulia di sini.\n\n📝 Catatan:\n- Gaji bulanan: Rp 5.000.000\n- Tabungan tujuan: Liburan akhir tahun\n- Target: Rp 10.000.000"
+      });
     }
 
     // Error response
